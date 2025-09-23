@@ -2,8 +2,6 @@ from django.db import models
 
 class Trabajador(models.Model):
     nombre = models.CharField(max_length=100)
-    #relaciones
-    bodegaAsignada = models.ForeignKey('Bodega', related_name='trabajadores', blank=True, null=True, on_delete=models.SET_NULL)
     class Meta:
         abstract = True
 
@@ -12,24 +10,34 @@ class LiderLogistica(Trabajador):
 
 class Alistador(Trabajador):
     liderLogistica = models.ForeignKey('LiderLogistica', on_delete=models.SET_NULL, null=True)
+    #relaciones
+    bodegaAsignada = models.ForeignKey('Bodega', related_name='trabajadores', blank=True, null=True, on_delete=models.SET_NULL)
 
 class Verificador(Trabajador):
     liderLogistica = models.ForeignKey('LiderLogistica', on_delete=models.SET_NULL, null=True)
+    #relaciones
+    bodegaAsignada = models.ForeignKey('Bodega', related_name='trabajadores', blank=True, null=True, on_delete=models.SET_NULL)
 
 class Empacador(Trabajador):
     liderLogistica = models.ForeignKey('LiderLogistica', on_delete=models.SET_NULL, null=True)
+    #relaciones
+    bodegaAsignada = models.ForeignKey('Bodega', related_name='trabajadores', blank=True, null=True, on_delete=models.SET_NULL)
 
 class Administrador(Trabajador):
-    pass
+    #relaciones
+    bodegaAsignada = models.ForeignKey('Bodega', related_name='trabajadores', blank=True, null=True, on_delete=models.SET_NULL)
 
 class Vendedor(models.Model):
-    pass
+    #relaciones
+    bodegaAsignada = models.ForeignKey('Bodega', related_name='trabajadores', blank=True, null=True, on_delete=models.SET_NULL)
 
 class Contador(models.Model):
-    pass
+    #relaciones
+    bodegaAsignada = models.ForeignKey('Bodega', related_name='trabajadores', blank=True, null=True, on_delete=models.SET_NULL)
 
 class Facturador(models.Model):
-    pass
+    #relaciones
+    bodegaAsignada = models.ForeignKey('Bodega', related_name='trabajadores', blank=True, null=True, on_delete=models.SET_NULL)
 
 class Pedido(models.Model):
     precio_calculado = models.DecimalField(max_digits=10, decimal_places=2)
@@ -45,6 +53,8 @@ class Bodega(models.Model):
     ciudad = models.CharField(max_length=100)
     direccion = models.CharField(max_length=255)
     capacidad = models.DecimalField(max_digits=10, decimal_places=2)
+    #relaciones
+    ubicacion = models.OneToOneField('Ubicacion', on_delete=models.SET_NULL, null=True)
     
 
 
@@ -117,7 +127,7 @@ class Ubicacion(models.Model):
     dimensiones = models.CharField(max_length=255)
     estado = models.CharField(max_length=100)
     #relaciones
-    bodegas = models.ForeignKey('Bodega', on_delete=models.CASCADE)
+    bodegas = models.OneToOneField('Bodega', on_delete=models.CASCADE)
 
 
 class Evidencia(models.Model):
