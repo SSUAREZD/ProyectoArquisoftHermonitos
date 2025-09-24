@@ -48,8 +48,7 @@ def create_productos():
             tipo=tipo,
             peso=round(random.uniform(0.2, 2.0), 2),
             volumen=round(random.uniform(0.05, 0.5), 2),
-            codigo=f"DOT-{random.randint(1000,9999)}",
-            nombre=nombre
+            codigo=f"{nombre} - DOT-{random.randint(1000,9999)}"
         )
 
 def create_bodegas():
