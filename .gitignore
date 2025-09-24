@@ -1,14 +1,62 @@
-# Entorno virtual
-env/
-venv/
-
-# Archivos de Python
-*.pyc
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
 
-# Archivos de base de datos local
+# C extensions
+*.so
+
+# Virtual environment
+venv/
+.env/
+*.env
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
 *.sqlite3
+db.sqlite3
 
-# Archivos de configuración del IDE
-*.vscode/
+# Media & Static (generated)
+media/
+staticfiles/
+static/
+
+# Migrations (you might want to keep them if already committed)
+*/migrations/__pycache__/
+*/migrations/*.pyc
+# Uncomment the next line if you want to ignore all migration files
+*/migrations/
+
+# IDEs & editors
+.vscode/
 .idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test / coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Pipenv / Poetry
+Pipfile.lock
+poetry.lock
+
+# PyInstaller
+*.manifest
+*.spec
+
+__pycache__/
+*.py[cod]
