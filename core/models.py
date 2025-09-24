@@ -32,8 +32,7 @@ class Contador(Trabajador):
 
 class Facturador(Trabajador):
     bodegaAsignada = models.ForeignKey('Bodega', related_name='facturadores', blank=True, null=True, on_delete=models.SET_NULL)
-
-# ----------- Entidades de negocio -----------
+# ----------------------------------------------------------
 class Pedido(models.Model):
     precio_calculado = models.DecimalField(max_digits=10, decimal_places=2)
     guiasEnvio = models.ForeignKey('GuiaEnvio', on_delete=models.SET_NULL, null=True)
@@ -45,6 +44,8 @@ class Bodega(models.Model):
     codigo = models.CharField(max_length=50)
     nombre = models.CharField(max_length=100)
     ciudad = models.CharField(max_length=100)
+    latitud = models.FloatField(null=True, blank=True)
+    longitud = models.FloatField(null=True, blank=True)
     direccion = models.CharField(max_length=255)
     capacidad = models.DecimalField(max_digits=10, decimal_places=2)
     ubicacion = models.OneToOneField('Ubicacion', on_delete=models.SET_NULL, null=True, related_name='bodega_asociada')

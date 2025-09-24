@@ -56,13 +56,13 @@ def obtener_promedio_inventario(bodega_id):
 
     for inv in inventarios:
         if inv.cantidad_reservada and inv.cantidad_reservada != 0:
-            total += inv.cantidad_disponible / inv.cantidad_reservada
+            total += inv.cantidad_disponible / (inv.cantidad_reservada+ inv.cantidad_disponible)
             count += 1
 
     if count == 0:
         return None 
 
-    return total / count
+    return (total / count)
 
 def obtener_promedio_todas_bodegas():
     bodegas = Bodega.objects.all()
@@ -71,7 +71,12 @@ def obtener_promedio_todas_bodegas():
     for bodega in bodegas:
         promedio = obtener_promedio_inventario(bodega.id)
         if promedio is not None:
-            res[bodega.id]=promedio
+            res[bodega.id] = {
+    "promedio": promedio,
+    "nombre": bodega.nombre,
+    "direccion": bodega.direccion,
+    "latitud": float(bodega.latitud),
+    "longitud": float(bodega.longitud),
+}
             
-
     return res

@@ -1,6 +1,6 @@
 from django.urls import path
-from core.views.bodega_views import promedio_bodegas_view
+from core.views.bodega_views import mapa_bodegas_view
 
 urlpatterns = [
-    path('bodegas/promedio/', promedio_bodegas_view, name='promedio_bodegas'),
+    path('bodegas/mapa/', mapa_bodegas_view, name='mapa_bodegas'),
 ]

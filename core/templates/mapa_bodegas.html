@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapa de Bodegas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+    <h1>Mapa de Bodegas</h1>
+    <div id="map" style="height: 600px;"></div>
+
+    <script>
+         const bodegas = {{ bodegas_json|safe }};
+
+    const map = L.map('map').setView([4.6, -74.1], 6); // Bogotá center
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+    }).addTo(map);
+
+    function getColor(promedio) {
+        if (promedio <= 20) return 'red';
+        if (promedio <= 50) return 'orange';
+        if (promedio <= 80) return 'yellow';
+        return 'green';
+    }
+
+    for (const id in bodegas) {
+        const bodega = bodegas[id];
+        const { latitud, longitud, nombre, direccion, promedio } = bodega;
+
+        if (latitud && longitud) {
+            const color = getColor(promedio);
+
+            const marker = L.circleMarker([latitud, longitud], {
+                radius: 10,
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.7
+            }).addTo(map);
+
+            marker.bindPopup(`
+                <b>${nombre}</b><br>
+                Dirección: ${direccion}<br>
+                Promedio de inventario: ${promedio}
+            `);
+        }
+    }
+    </script>
+</body>
+</html>
