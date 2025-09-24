@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard de Bodegas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+    <h1>Dashboard de Bodegas</h1>
+    <div id="map" style="height: 600px;"></div>
+
+    <script>
+    const map = L.map('map').setView([4.6, -74.1], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+    }).addTo(map);
+
+    function getColor(promedio) {
+        if (promedio <= 20) return 'red';
+        if (promedio <= 50) return 'orange';
+        if (promedio <= 80) return 'yellow';
+        return 'green';
+    }
+
+    // Carga los datos de bodegas usando AJAX para máxima velocidad
+    fetch('/api/bodegas/')
+        .then(response => response.json())
+        .then(bodegas => {
+            for (const id in bodegas) {
+                const bodega = bodegas[id];
+                const { latitud, longitud, nombre, direccion, promedio } = bodega;
+
+                if (latitud && longitud) {
+                    const color = getColor(promedio);
+
+                    const marker = L.circleMarker([latitud, longitud], {
+                        radius: 10,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.7
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <b>${nombre}</b><br>
+                        Dirección: ${direccion}<br>
+                        Promedio de inventario: ${promedio}
+                    `);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
