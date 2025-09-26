@@ -18,33 +18,34 @@
         maxZoom: 18,
     }).addTo(map);
 
-    function getColor(promedio) {
-        if (promedio <= 20) return 'red';
-        if (promedio <= 50) return 'orange';
-        if (promedio <= 80) return 'yellow';
-        return 'green';
+    function getColor(ocupacion) {
+        if (ocupacion >= 90) return '#7a0b0b';      // muy saturado
+        if (ocupacion >= 75) return '#d7301f';      // alto
+        if (ocupacion >= 60) return '#fc8d59';      // medio-alto
+        if (ocupacion >= 40) return '#fee08b';      // medio
+        if (ocupacion >= 20) return '#d9ef8b';      // bajo-medio
+        return '#91cf60';                           // bajo
     }
 
     for (const id in bodegas) {
         const bodega = bodegas[id];
-        const { latitud, longitud, nombre, direccion, promedio } = bodega;
-
-        if (latitud && longitud) {
-            const color = getColor(promedio);
-
-            const marker = L.circleMarker([latitud, longitud], {
-                radius: 10,
-                color: color,
-                fillColor: color,
-                fillOpacity: 0.7
-            }).addTo(map);
-
-            marker.bindPopup(`
-                <b>${nombre}</b><br>
-                Dirección: ${direccion}<br>
-                Promedio de inventario: ${promedio}
-            `);
-        }
+        const { latitud, longitud, nombre, direccion, ocupacion_pct, capacidad, total_disponible, total_reservado } = bodega;
+        if (!latitud || !longitud) continue;
+        const occ = ocupacion_pct ?? 0;
+        const marker = L.circleMarker([latitud, longitud], {
+            radius: 10,
+            color: getColor(occ),
+            fillColor: getColor(occ),
+            fillOpacity: 0.75
+        }).addTo(map);
+        marker.bindPopup(`
+            <b>${nombre ?? 'Bodega'}</b><br>
+            Dirección: ${direccion ?? '-'}<br>
+            Capacidad: ${capacidad ?? 0}<br>
+            Disponible: ${total_disponible ?? 0}<br>
+            Reservado: ${total_reservado ?? 0}<br>
+            Ocupación: ${occ}%
+        `);
     }
     </script>
 </body>
