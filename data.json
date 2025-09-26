@@ -1,0 +1,482 @@
+[
+{
+  "model": "core.bodega",
+  "pk": 11,
+  "fields": {
+    "codigo": "BOD001",
+    "nombre": "Bodega Norte Bogotá",
+    "ciudad": "Bogotá",
+    "latitud": 4.75,
+    "longitud": -74.03,
+    "direccion": "Cra 15 # 100-25, Bogotá",
+    "capacidad": "930.67",
+    "ubicacion": null
+  }
+},
+{
+  "model": "core.bodega",
+  "pk": 12,
+  "fields": {
+    "codigo": "BOD002",
+    "nombre": "Bodega Sur Bogotá",
+    "ciudad": "Medellín",
+    "latitud": 4.65,
+    "longitud": -74.1,
+    "direccion": "Av. El Poblado # 45-67, Medellín",
+    "capacidad": "1437.77",
+    "ubicacion": null
+  }
+},
+{
+  "model": "core.bodega",
+  "pk": 13,
+  "fields": {
+    "codigo": "BOD003",
+    "nombre": "Bodega Medellín",
+    "ciudad": "Cali",
+    "latitud": 6.25,
+    "longitud": -75.57,
+    "direccion": "Calle 13 # 23-45, Cali",
+    "capacidad": "1970.25",
+    "ubicacion": null
+  }
+},
+{
+  "model": "core.bodega",
+  "pk": 14,
+  "fields": {
+    "codigo": "BOD004",
+    "nombre": "Bodega Cali",
+    "ciudad": "Barranquilla",
+    "latitud": 3.45,
+    "longitud": -76.53,
+    "direccion": "Cra 46 # 80-120, Barranquilla",
+    "capacidad": "1850.16",
+    "ubicacion": null
+  }
+},
+{
+  "model": "core.bodega",
+  "pk": 15,
+  "fields": {
+    "codigo": "BOD005",
+    "nombre": "Bodega Barranquilla",
+    "ciudad": "Cartagena",
+    "latitud": 10.4,
+    "longitud": -75.5,
+    "direccion": "Av. Pedro de Heredia # 12-34, Cartagena",
+    "capacidad": "1943.58",
+    "ubicacion": null
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 41,
+  "fields": {
+    "codigo_barras": "7700719851533",
+    "tipo": "Ropa",
+    "peso": 0.84,
+    "volumen": 0.21,
+    "codigo": "Uniforme Ejecutivo - DOT-2415"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 42,
+  "fields": {
+    "codigo_barras": "7700512791705",
+    "tipo": "Calzado",
+    "peso": 1.79,
+    "volumen": 0.11,
+    "codigo": "Botas de Seguridad - DOT-2933"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 43,
+  "fields": {
+    "codigo_barras": "7700054407042",
+    "tipo": "Protección",
+    "peso": 0.77,
+    "volumen": 0.16,
+    "codigo": "Casco Industrial - DOT-8523"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 44,
+  "fields": {
+    "codigo_barras": "7700287476935",
+    "tipo": "Protección",
+    "peso": 1.1,
+    "volumen": 0.05,
+    "codigo": "Guantes Anticorte - DOT-6483"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 45,
+  "fields": {
+    "codigo_barras": "7700123024682",
+    "tipo": "Ropa",
+    "peso": 1.64,
+    "volumen": 0.48,
+    "codigo": "Chaqueta Reflectiva - DOT-1977"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 46,
+  "fields": {
+    "codigo_barras": "7700110871302",
+    "tipo": "Ropa",
+    "peso": 1.55,
+    "volumen": 0.22,
+    "codigo": "Camisa Polo - DOT-9045"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 47,
+  "fields": {
+    "codigo_barras": "7700636527904",
+    "tipo": "Ropa",
+    "peso": 1.38,
+    "volumen": 0.29,
+    "codigo": "Pantalón Cargo - DOT-9103"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 48,
+  "fields": {
+    "codigo_barras": "7700280055711",
+    "tipo": "Calzado",
+    "peso": 0.5,
+    "volumen": 0.22,
+    "codigo": "Zapatos Dieléctricos - DOT-8679"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 49,
+  "fields": {
+    "codigo_barras": "7700804184655",
+    "tipo": "Protección",
+    "peso": 0.83,
+    "volumen": 0.47,
+    "codigo": "Gafas de Seguridad - DOT-5485"
+  }
+},
+{
+  "model": "core.producto",
+  "pk": 50,
+  "fields": {
+    "codigo_barras": "7700187993744",
+    "tipo": "Protección",
+    "peso": 0.38,
+    "volumen": 0.34,
+    "codigo": "Tapabocas N95 - DOT-2814"
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 76,
+  "fields": {
+    "cantidad_disponible": 34,
+    "cantidad_reservada": 11,
+    "ultima_actualizacion": "2025-09-02T18:45:03.626Z",
+    "productos": 43,
+    "bodegas": 11,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 77,
+  "fields": {
+    "cantidad_disponible": 26,
+    "cantidad_reservada": 7,
+    "ultima_actualizacion": "2025-09-12T18:45:03.643Z",
+    "productos": 47,
+    "bodegas": 11,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 78,
+  "fields": {
+    "cantidad_disponible": 35,
+    "cantidad_reservada": 3,
+    "ultima_actualizacion": "2025-09-09T18:45:03.647Z",
+    "productos": 49,
+    "bodegas": 11,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 79,
+  "fields": {
+    "cantidad_disponible": 40,
+    "cantidad_reservada": 19,
+    "ultima_actualizacion": "2025-08-29T18:45:03.651Z",
+    "productos": 50,
+    "bodegas": 11,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 80,
+  "fields": {
+    "cantidad_disponible": 30,
+    "cantidad_reservada": 9,
+    "ultima_actualizacion": "2025-08-29T18:45:03.655Z",
+    "productos": 48,
+    "bodegas": 11,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 81,
+  "fields": {
+    "cantidad_disponible": 88,
+    "cantidad_reservada": 25,
+    "ultima_actualizacion": "2025-09-15T18:45:03.660Z",
+    "productos": 50,
+    "bodegas": 12,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 82,
+  "fields": {
+    "cantidad_disponible": 125,
+    "cantidad_reservada": 18,
+    "ultima_actualizacion": "2025-09-23T18:45:03.665Z",
+    "productos": 41,
+    "bodegas": 12,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 83,
+  "fields": {
+    "cantidad_disponible": 82,
+    "cantidad_reservada": 28,
+    "ultima_actualizacion": "2025-09-03T18:45:03.669Z",
+    "productos": 45,
+    "bodegas": 12,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 84,
+  "fields": {
+    "cantidad_disponible": 83,
+    "cantidad_reservada": 37,
+    "ultima_actualizacion": "2025-09-06T18:45:03.675Z",
+    "productos": 47,
+    "bodegas": 12,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 85,
+  "fields": {
+    "cantidad_disponible": 85,
+    "cantidad_reservada": 29,
+    "ultima_actualizacion": "2025-09-08T18:45:03.680Z",
+    "productos": 46,
+    "bodegas": 12,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 86,
+  "fields": {
+    "cantidad_disponible": 34,
+    "cantidad_reservada": 16,
+    "ultima_actualizacion": "2025-09-14T18:45:03.685Z",
+    "productos": 41,
+    "bodegas": 13,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 87,
+  "fields": {
+    "cantidad_disponible": 41,
+    "cantidad_reservada": 15,
+    "ultima_actualizacion": "2025-09-04T18:45:03.691Z",
+    "productos": 45,
+    "bodegas": 13,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 88,
+  "fields": {
+    "cantidad_disponible": 37,
+    "cantidad_reservada": 2,
+    "ultima_actualizacion": "2025-09-18T18:45:03.696Z",
+    "productos": 49,
+    "bodegas": 13,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 89,
+  "fields": {
+    "cantidad_disponible": 42,
+    "cantidad_reservada": 10,
+    "ultima_actualizacion": "2025-08-31T18:45:03.700Z",
+    "productos": 46,
+    "bodegas": 13,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 90,
+  "fields": {
+    "cantidad_disponible": 30,
+    "cantidad_reservada": 9,
+    "ultima_actualizacion": "2025-09-16T18:45:03.706Z",
+    "productos": 42,
+    "bodegas": 13,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 91,
+  "fields": {
+    "cantidad_disponible": 17,
+    "cantidad_reservada": 1,
+    "ultima_actualizacion": "2025-09-22T18:45:03.711Z",
+    "productos": 41,
+    "bodegas": 14,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 92,
+  "fields": {
+    "cantidad_disponible": 14,
+    "cantidad_reservada": 2,
+    "ultima_actualizacion": "2025-08-31T18:45:03.716Z",
+    "productos": 50,
+    "bodegas": 14,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 93,
+  "fields": {
+    "cantidad_disponible": 11,
+    "cantidad_reservada": 1,
+    "ultima_actualizacion": "2025-09-19T18:45:03.721Z",
+    "productos": 45,
+    "bodegas": 14,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 94,
+  "fields": {
+    "cantidad_disponible": 11,
+    "cantidad_reservada": 0,
+    "ultima_actualizacion": "2025-09-11T18:45:03.726Z",
+    "productos": 46,
+    "bodegas": 14,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 95,
+  "fields": {
+    "cantidad_disponible": 7,
+    "cantidad_reservada": 3,
+    "ultima_actualizacion": "2025-09-15T18:45:03.731Z",
+    "productos": 43,
+    "bodegas": 14,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 96,
+  "fields": {
+    "cantidad_disponible": 56,
+    "cantidad_reservada": 3,
+    "ultima_actualizacion": "2025-09-21T18:45:03.734Z",
+    "productos": 46,
+    "bodegas": 15,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 97,
+  "fields": {
+    "cantidad_disponible": 57,
+    "cantidad_reservada": 12,
+    "ultima_actualizacion": "2025-09-17T18:45:03.740Z",
+    "productos": 42,
+    "bodegas": 15,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 98,
+  "fields": {
+    "cantidad_disponible": 72,
+    "cantidad_reservada": 24,
+    "ultima_actualizacion": "2025-09-15T18:45:03.745Z",
+    "productos": 48,
+    "bodegas": 15,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 99,
+  "fields": {
+    "cantidad_disponible": 59,
+    "cantidad_reservada": 21,
+    "ultima_actualizacion": "2025-09-23T18:45:03.750Z",
+    "productos": 49,
+    "bodegas": 15,
+    "ubicaciones": null
+  }
+},
+{
+  "model": "core.inventario",
+  "pk": 100,
+  "fields": {
+    "cantidad_disponible": 67,
+    "cantidad_reservada": 30,
+    "ultima_actualizacion": "2025-08-26T18:45:03.755Z",
+    "productos": 44,
+    "bodegas": 15,
+    "ubicaciones": null
+  }
+}
+]
