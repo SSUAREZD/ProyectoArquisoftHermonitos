@@ -155,5 +155,5 @@ resource "aws_lb_listener" "db_listener" {
 
 resource "aws_autoscaling_attachment" "asg_to_tg" {
   autoscaling_group_name = aws_autoscaling_group.db_asg.name
-  alb_target_group_arn   = aws_lb_target_group.db_tg.arn
+  lb_target_group_arn   = aws_lb_target_group.db_tg.arn
 }
