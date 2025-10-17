@@ -68,7 +68,7 @@ resource "aws_instance" "database" {
               sudo -u postgres psql -d monitoring_db -c "CREATE TABLE Users (username TEXT, password TEXT);"
 
               for i in $(seq 1 2000); do
-                sudo -u postgres psql -d monitoring_db -c "INSERT INTO Users (username, password) VALUES ('\$i', '\$i');"
+                sudo -u postgres psql -d monitoring_db -c "INSERT INTO Users (username, password) VALUES ('$i', '$i');"
               done
               EOF
 
