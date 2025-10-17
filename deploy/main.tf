@@ -31,6 +31,14 @@ resource "aws_security_group" "traffic_db" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "Allow SSH from anywhere (for testing)"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # or ["YOUR_PUBLIC_IP/32"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
