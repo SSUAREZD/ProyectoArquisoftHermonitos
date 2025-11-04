@@ -8,8 +8,8 @@ apt-get install -y python3 python3-venv python3-pip git build-essential libpq-de
 
 # App home
 APP_HOME=/opt/arquisoft
-mkdir -p "${APP_HOME}"
-cd "${APP_HOME}"
+mkdir -p "$APP_HOME"
+cd "$APP_HOME"
 
 # Clone the repo
 if [ ! -d "ProyectoArquisoftHermonitos" ]; then
