@@ -30,11 +30,11 @@ pip install "psycopg2-binary>=2.9" Pillow
 
 # === Write DB settings and make Django use them ===
 SETTINGS_DIR="proyectoArquisoft"
-SETTINGS_MAIN="${SETTINGS_DIR}/settings.py"
-SETTINGS_LOCAL="${SETTINGS_DIR}/settings_local.py"
+SETTINGS_MAIN="$SETTINGS_DIR/settings.py"
+SETTINGS_LOCAL="$SETTINGS_DIR/settings_local.py"
 
 # Ensure settings.py will import settings_local if present
-grep -q "settings_local" "${SETTINGS_MAIN}" || cat >> "${SETTINGS_MAIN}" <<'PYEOF'
+grep -q "settings_local" "$SETTINGS_MAIN" || cat >> "$SETTINGS_MAIN" <<'PYEOF'
 
 # --- auto-included by bootstrap ---
 try:
@@ -45,7 +45,7 @@ except Exception:
 PYEOF
 
 # Write settings_local.py with the RDS connection
-cat > "${SETTINGS_LOCAL}" <<PYEOF
+cat > "$SETTINGS_LOCAL" <<PYEOF
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -68,7 +68,7 @@ else
   DJANGO_DIR="$(git rev-parse --show-toplevel)"
 fi
 
-cd "${DJANGO_DIR}"
+cd "$DJANGO_DIR"
 
 python3 manage.py migrate --noinput || (sleep 5 && python3 manage.py migrate --noinput)
 #----DB population-------
