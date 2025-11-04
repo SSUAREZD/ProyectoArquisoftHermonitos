@@ -69,7 +69,39 @@ else
 fi
 
 cd "${DJANGO_DIR}"
-python3 manage.py migrate --noinput || (sleep 5 && python3 manage.py migrate --noinput)
 
-# OPTIONAL: runserver on 8080 (comment out if you only wanted migrations)
-# nohup python3 manage.py runserver 0.0.0.0:8080 >/var/log/django-runserver.log 2>&1 &
+#----DB population-------
+
+apt-get install -y postgresql-client
+
+psql "postgresql://${db_user}:${db_password}@${rds_host}:${db_port}/${db_name}" <<'EOF'
+-- insert Bodega
+INSERT INTO core_bodega (codigo, nombre, ciudad, direccion, capacidad, longitud, latitud)
+VALUES ('BOD-001', 'Bodega Central', 'Bogotá', 'Cra 7 # 72-41', 1000.00, -74.060, 4.664)
+RETURNING id;
+
+-- insert Ubicacion for that Bodega
+INSERT INTO core_ubicacion (codigo, tipo, capacidad_max, dimensiones, estado, bodega_id)
+VALUES ('UB-01', 'Estanteria', 200.0, '2mx1mx1m', 'Disponible', 1)
+RETURNING id;
+
+-- insert Productos
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+VALUES ('7701234567890', 'Electronico', 1.5, 0.002, 'PRD-001')
+RETURNING id;
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+VALUES ('7700987654321', 'Juguete', 0.3, 0.0005, 'PRD-002')
+RETURNING id;
+
+-- insert Inventario for those products at Bodega 1
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+VALUES (50, 5, NOW(), 1, 1);
+
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+VALUES (150, 10, NOW(), 2, 1);
+EOF
+
+echo "=== DB populated ==="
+
+nohup python3 manage.py runserver 0.0.0.0:8080 >/var/log/django-runserver.log 2>&1 &
