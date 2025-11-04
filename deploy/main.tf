@@ -113,7 +113,7 @@ resource "aws_db_instance" "postgres" {
   port                    = 5432
 
   db_subnet_group_name    = aws_db_subnet_group.rds.name
-  rds_security_group_ids  = [aws_security_group.traffic_db.id]
+  vpc_security_group_ids  = [aws_security_group.traffic_db.id]
 
   multi_az                = false
   publicly_accessible     = false         
