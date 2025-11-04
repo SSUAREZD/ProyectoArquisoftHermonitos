@@ -86,6 +86,14 @@ resource "aws_security_group" "traffic_inventario" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+  description = "SSH"
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"] # or replace with your IP only
+}
+
   tags = { Name = "traffic_inventario" }
 }
 
