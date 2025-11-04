@@ -70,6 +70,7 @@ fi
 
 cd "${DJANGO_DIR}"
 
+python3 manage.py migrate --noinput || (sleep 5 && python3 manage.py migrate --noinput)
 #----DB population-------
 
 apt-get install -y postgresql-client
