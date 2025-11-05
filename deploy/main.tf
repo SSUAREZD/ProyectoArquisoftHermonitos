@@ -35,7 +35,7 @@ locals {
 ##############################
 resource "aws_security_group" "traffic_db" {
   name        = "traffic-db"
-  description = "Allow PostgreSQL access"
+  description = "PostgreSQL EC2 access"
   vpc_id = data.aws_vpc.default.id
 
   ingress {
@@ -60,6 +60,9 @@ resource "aws_security_group" "traffic_db" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = { Name = "traffic_db_instance" }
+
 }
 
 ##############################
@@ -107,31 +110,23 @@ resource "aws_db_subnet_group" "rds" {
 }
 
 ############################
-# RDS PostgreSQL (private)
+# EC2 running PostgreSQL 16
 ############################
-resource "aws_db_instance" "postgres" {
-  identifier              = "arquisoft-postgres"
-  engine                  = "postgres"
-  engine_version          = "13.21"        
-  instance_class          = "db.t3.micro" # Menos costo: "db.t4g.micro"
-  allocated_storage       = 20
-  db_name                 = "db_proyect"
-  username                = "Administrator"
-  password                = "Arquisoft2502"
-  port                    = 5432
+resource "aws_instance" "db_server" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t3.micro"
+  subnet_id                   = local.ec2_subnet_id
+  vpc_security_group_ids      = [aws_security_group.db.id]
+  associate_public_ip_address = true   # keep public for quick SSH if needed
 
-  db_subnet_group_name    = aws_db_subnet_group.rds.name
-  vpc_security_group_ids  = [aws_security_group.traffic_db.id]
+  tags = { Name = "traffic_db_server" }
 
-  multi_az                = false
-  publicly_accessible     = false         
-  storage_encrypted       = true
-  skip_final_snapshot     = true
-
-  backup_retention_period = 0
-  deletion_protection     = false
-
-  tags = { Name = "arquisoft-postgres" }
+  user_data = templatefile("${path.module}/db_user_data.sh.tpl", {
+    vpc_cidr   = data.aws_vpc.default.cidr_block
+    db_name    = "db_proyect"
+    db_user    = "Administrator"
+    db_password= "Arquisoft2502"
+  })
 }
 
 ############################
@@ -162,7 +157,7 @@ resource "aws_instance" "inventario" {
 
   user_data = templatefile("${path.module}/user_data.sh.tpl", {
     repo_url    = "https://github.com/SSUAREZD/ProyectoArquisoftHermonitos.git"
-    rds_host    = aws_db_instance.postgres.address
+    db_host     = aws_instance.db_server.private_ip
     db_name     = "db_proyect"
     db_user     = "Administrator"
     db_password = "Arquisoft2502"
