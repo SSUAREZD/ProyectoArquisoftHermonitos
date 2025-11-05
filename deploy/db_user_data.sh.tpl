@@ -21,10 +21,13 @@ sed -i "s/^#*listen_addresses.*/listen_addresses = '0.0.0.0'/" "$PGCONF"
 # allow postgres user locally
 echo "local all postgres trust" >> "$PGHBA"
 
+# force MD5 encryption everywhere
+sed -i "s/scram-sha-256/md5/g" "$PGHBA"
+
 # Allow VPC CIDR
 echo "host all all ${vpc_cidr} md5" >> "$PGHBA"
-
 systemctl restart postgresql
+sleep 3
 
 # Create role if not exist
 sudo -u postgres psql -v ON_ERROR_STOP=1 <<SQL
