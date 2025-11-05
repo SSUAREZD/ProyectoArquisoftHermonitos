@@ -10,7 +10,7 @@ APP_HOME=/opt/arquisoft
 mkdir -p "$APP_HOME"
 cd "$APP_HOME"
 
-# --- Clone only the requested branch (saves space) ---
+# --- Clone the main branch  ---
 if [ ! -d "ProyectoArquisoftHermonitos" ]; then
   git clone --branch "${branch}" --single-branch "${repo_url}"
 fi
