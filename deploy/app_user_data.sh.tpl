@@ -27,8 +27,8 @@ if [ -f requirements.txt ]; then
 fi
 pip install "psycopg2-binary>=2.9" Pillow
 
-# Settings override (IMPORTANT: your settings folder is 'ProyectoArquisoft')
-SETTINGS_DIR="ProyectoArquisoft"
+# Settings override (IMPORTANT: your settings folder is 'proyectoArquisoft')
+SETTINGS_DIR="proyectoArquisoft"
 SETTINGS_MAIN="$SETTINGS_DIR/settings.py"
 SETTINGS_LOCAL="$SETTINGS_DIR/settings_local.py"
 
