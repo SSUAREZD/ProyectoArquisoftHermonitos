@@ -101,22 +101,13 @@ resource "aws_security_group" "traffic_inventario" {
 }
 
 ############################
-# RDS subnet group
-############################
-resource "aws_db_subnet_group" "rds" {
-  name       = "rds-subnets-auto"
-  subnet_ids = local.rds_subnet_ids
-  tags       = { Name = "rds-subnets-auto" }
-}
-
-############################
 # EC2 running PostgreSQL 16
 ############################
 resource "aws_instance" "db_server" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = "t3.micro"
   subnet_id                   = local.ec2_subnet_id
-  vpc_security_group_ids      = [aws_security_group.db.id]
+  vpc_security_group_ids      = [aws_security_group.traffic_db.id]
   associate_public_ip_address = true   # keep public for quick SSH if needed
 
   tags = { Name = "traffic_db_server" }
@@ -155,8 +146,9 @@ resource "aws_instance" "inventario" {
     Name = "traffic_inventario"
   }
 
-  user_data = templatefile("${path.module}/user_data.sh.tpl", {
+  user_data = templatefile("${path.module}/app_user_data.sh.tpl", {
     repo_url    = "https://github.com/SSUAREZD/ProyectoArquisoftHermonitos.git"
+    branch      = "main"
     db_host     = aws_instance.db_server.private_ip
     db_name     = "db_proyect"
     db_user     = "Administrator"
@@ -165,8 +157,8 @@ resource "aws_instance" "inventario" {
   })
 }
 
-output "rds_endpoint" {
-  value = aws_db_instance.postgres.address
+output "db_public_ip" {
+  value = aws_instance.db_server.public_ip
 }
 
 output "app_public_ip" {
