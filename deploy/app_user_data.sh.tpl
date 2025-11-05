@@ -11,7 +11,7 @@ mkdir -p "$APP_HOME"
 cd "$APP_HOME"
 
 # Clone only the requested branch (saves space)
-if [ ! -d "ProyectoArquisoftHermonitos" ];
+if [ ! -d "ProyectoArquisoftHermonitos" ]; then 
   git clone --branch "${branch}" --single-branch "${repo_url}"
 fi
 cd ProyectoArquisoftHermonitos
@@ -68,7 +68,7 @@ for i in {1..30}; do
     echo "DB is up!"
     break
   fi
-  echo "DB not ready yet... (${i}/30)"
+  echo "DB not ready yet... ($i/30)"
   sleep 4
 done
 
