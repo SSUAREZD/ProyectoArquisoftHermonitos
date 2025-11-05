@@ -32,6 +32,9 @@ SETTINGS_DIR="proyectoArquisoft"
 SETTINGS_MAIN="$SETTINGS_DIR/settings.py"
 SETTINGS_LOCAL="$SETTINGS_DIR/settings_local.py"
 
+
+echo 'ALLOWED_HOSTS = ["*",]' >> "$SETTINGS_LOCAL"
+
 # Make settings.py import settings_local if not already present
 grep -q "settings_local" "$SETTINGS_MAIN" || cat >> "$SETTINGS_MAIN" <<'PYEOF'
 
