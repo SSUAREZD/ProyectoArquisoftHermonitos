@@ -59,17 +59,13 @@ DATABASES = {
 PYEOF
 
 # ensure database exists
-psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/postgres" -c "CREATE DATABASE ${db_name}" || true
-
-# wait for postgres to be ready
-echo "Waiting for database to be ready..."
-for i in {1..30}; do
-  if psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/postgres" -c "SELECT 1" >/dev/null 2>&1; then
-    echo "DB is up!"
-    break
-  fi
-  echo "DB not ready yet... ($i/30)"
-  sleep 4
+for i in {1..20}; do
+    if psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/postgres" -c "CREATE DATABASE ${db_name};" >/dev/null 2>&1; then
+        echo "Database ${db_name} exists"
+        break
+    fi
+    echo "Waiting for DB to accept CREATE DATABASE... ($i/20)"
+    sleep 3
 done
 
 # Run migrations
