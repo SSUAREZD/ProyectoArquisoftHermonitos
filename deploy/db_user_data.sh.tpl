@@ -19,25 +19,17 @@ PGHBA="/etc/postgresql/$PGVER/main/pg_hba.conf"
 sed -i "s/^#*listen_addresses.*/listen_addresses = '0.0.0.0'/" "$PGCONF"
 
 # allow postgres user locally
-echo "local all postgres trust" >> "$PGHBA"
+echo "local   all             postgres                                trust" >> "$PGHBA"
+# allow VPC cidr
+echo "host    all             all                 ${vpc_cidr}         md5"   >> "$PGHBA"
 
-# force MD5 encryption everywhere
-sed -i "s/scram-sha-256/md5/g" "$PGHBA"
-
-# Allow VPC CIDR
-echo "host all all ${vpc_cidr} md5" >> "$PGHBA"
 systemctl restart postgresql
 sleep 3
 
-# Create role if not exist
-sudo -u postgres psql -v ON_ERROR_STOP=1 <<SQL
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'Administrator') THEN
-    CREATE ROLE "Administrator" LOGIN PASSWORD '${db_password}';
-  END IF;
-END$$;
-SQL
+# -------- CREATE USER & DB ---------
 
-# Create database
-sudo -u postgres psql -c "CREATE DATABASE ${db_name} OWNER \"Administrator\";" || true
+# create Admin user if not exists
+sudo -u postgres psql -c "CREATE ROLE \"Administrator\" LOGIN PASSWORD '${db_password}'" || true
+
+# create database if not exists
+sudo -u postgres psql -c "CREATE DATABASE ${db_name} OWNER \"Administrator\"" || true
