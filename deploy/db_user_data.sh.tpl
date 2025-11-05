@@ -26,19 +26,15 @@ echo "host all all ${vpc_cidr} md5" >> "$PGHBA"
 
 systemctl restart postgresql
 
-# NOW create role/db
-sudo -u postgres psql <<SQL
-DO \$\$
+# Create role if not exist
+sudo -u postgres psql -v ON_ERROR_STOP=1 <<SQL
+DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'Administrator') THEN
     CREATE ROLE "Administrator" LOGIN PASSWORD '${db_password}';
   END IF;
-END\$\$;
-
-DO \$\$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = '${db_name}') THEN
-    CREATE DATABASE ${db_name} OWNER "Administrator";
-  END IF;
-END\$\$;
+END$$;
 SQL
+
+# Create database
+sudo -u postgres psql -c "CREATE DATABASE ${db_name} OWNER \"Administrator\";" || true
