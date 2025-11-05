@@ -11,7 +11,7 @@ mkdir -p "$APP_HOME"
 cd "$APP_HOME"
 
 # Clone only the requested branch (saves space)
-if [ ! -d "ProyectoArquisoftHermonitos" ]; then
+if [ ! -d "ProyectoArquisoftHermonitos" ];
   git clone --branch "${branch}" --single-branch "${repo_url}"
 fi
 cd ProyectoArquisoftHermonitos
@@ -58,12 +58,27 @@ DATABASES = {
 }
 PYEOF
 
+# ensure database exists
+psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/postgres" -c "CREATE DATABASE ${db_name}" || true
+
+# wait for postgres to be ready
+echo "Waiting for database to be ready..."
+for i in {1..30}; do
+  if psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/postgres" -c "SELECT 1" >/dev/null 2>&1; then
+    echo "DB is up!"
+    break
+  fi
+  echo "DB not ready yet... (${i}/30)"
+  sleep 4
+done
+
 # Run migrations
 if [ -f manage.py ]; then
   DJANGO_DIR="."
 else
   DJANGO_DIR="$(git rev-parse --show-toplevel)"
 fi
+
 cd "$DJANGO_DIR"
 
 python3 manage.py migrate --noinput || (sleep 5 && python3 manage.py migrate --noinput)
