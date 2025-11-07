@@ -1,6 +1,5 @@
 
 from django.http import HttpResponse
 
-
 def health_check(request):
-    return HttpResponse(status=200)
+    return HttpResponse("OK", status=200)
