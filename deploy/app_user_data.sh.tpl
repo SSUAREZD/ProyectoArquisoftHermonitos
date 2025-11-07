@@ -79,33 +79,58 @@ cd "$DJANGO_DIR"
 . .venv/bin/activate
 python3 manage.py migrate --noinput || (sleep 5 && python3 manage.py migrate --noinput)
 
-# --- small population ---
+# --- small population (idempotente) ---
 psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/${db_name}" -v ON_ERROR_STOP=1 <<'EOF' || true
--- Bodega
+-- Bodega (solo si no existe la de código BOD-001)
 INSERT INTO core_bodega (codigo, nombre, ciudad, direccion, capacidad, longitud, latitud)
-VALUES ('BOD-001', 'Bodega Central', 'Bogotá', 'Cra 7 # 72-41', 1000.00, -74.060, 4.664)
-ON CONFLICT DO NOTHING;
+SELECT 'BOD-001', 'Bodega Central', 'Bogotá', 'Cra 7 # 72-41', 1000.00, -74.060, 4.664
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_bodega WHERE codigo = 'BOD-001'
+);
 
--- Ubicacion (assumes bodega id 1 in an empty DB; adjust if needed)
+-- Ubicación (referenciando la bodega por código; evita duplicado por código de ubicación)
 INSERT INTO core_ubicacion (codigo, tipo, capacidad_max, dimensiones, estado, bodega_id)
-VALUES ('UB-01', 'Estanteria', 200.0, '2mx1mx1m', 'Disponible', 1)
-ON CONFLICT DO NOTHING;
+SELECT 'UB-01', 'Estanteria', 200.0, '2mx1mx1m', 'Disponible',
+       (SELECT id FROM core_bodega WHERE codigo = 'BOD-001')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_ubicacion WHERE codigo = 'UB-01'
+);
 
--- Productos
+-- Productos (evita repetir por código/código de barras)
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
-VALUES ('7701234567890', 'Electronico', 1.5, 0.002, 'PRD-001')
-ON CONFLICT DO NOTHING;
+SELECT '7701234567890', 'Electronico', 1.5, 0.002, 'PRD-001'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-001' OR codigo_barras = '7701234567890'
+);
 
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
-VALUES ('7700987654321', 'Juguete', 0.3, 0.0005, 'PRD-002')
-ON CONFLICT DO NOTHING;
+SELECT '7700987654321', 'Juguete', 0.3, 0.0005, 'PRD-002'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-002' OR codigo_barras = '7700987654321'
+);
 
--- Inventario (product ids 1,2 and bodega 1 in a fresh DB)
+-- Inventario (inserta solo si no hay registro producto+bodega)
+-- PRD-001 en BOD-001
 INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-VALUES (50, 5, NOW(), 1, 1);
+SELECT 50, 5, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-001'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
 
+-- PRD-002 en BOD-001
 INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-VALUES (150, 10, NOW(), 2, 1);
+SELECT 150, 10, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-002'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
 EOF
 
 # --- systemd service for Gunicorn on 0.0.0.0:8080 ---
