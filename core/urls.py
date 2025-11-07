@@ -1,5 +1,5 @@
 from django.urls import path
-from core.views import bodega_views
+from core.views import bodega_views, producto_views
 
 urlpatterns = [
     # Vistas HTML
@@ -15,4 +15,8 @@ urlpatterns = [
     path('api/aging/', bodega_views.aging_api, name='aging_api'),
     path('api/top-skus/', bodega_views.top_skus_api, name='top_skus_api'),
     path('api/tareas-estado/', bodega_views.tareas_estado_api, name='tareas_estado_api'),
+
+    # Endpoints CRUD para Producto
+    path('api/productos/', producto_views.productos_list_create_api, name='productos_list_create_api'),
+    path('api/productos/<int:producto_id>/', producto_views.producto_detail_api, name='producto_detail_api'),
 ]
