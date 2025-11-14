@@ -2,6 +2,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from core.decorators import require_auth
 from core.services.producto_service import (
     crear_producto,
     obtener_todos_productos,
@@ -25,6 +26,7 @@ def _serialize_producto(p):
 
 
 @csrf_exempt
+@require_auth(required_role='ADMIN')
 def productos_list_create_api(request):
     """GET: lista de productos (puede filtrar por ?tipo= o ?codigo_barras=)
     POST: crea un producto (JSON body con codigo_barras, tipo, peso, volumen, codigo)
