@@ -69,6 +69,7 @@ def productos_list_create_api(request):
 
 
 @csrf_exempt
+@require_auth(required_role='ADMIN')
 def producto_detail_api(request, producto_id):
     """GET, PUT, DELETE sobre un producto por id."""
     p = obtener_producto_por_id(producto_id)
