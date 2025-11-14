@@ -44,43 +44,59 @@ def pedidos_view(request):
 
 def call_inventario_reservar(producto_id, cantidad, bodega_id=1):
     """
-    Call manejador_inventarios service to reserve product with hash verification
-    THIS CALLS THE OTHER SERVER
+    Call manejador_inventarios to reserve product using HMAC integrity verification.
     """
     try:
+        # Payload canonical EXACTLY as server expects (alphabetical order)
         payload = {
-            'producto_id': str(producto_id),
+            'bodega_id': str(bodega_id),
             'cantidad': str(cantidad),
-            'bodega_id': str(bodega_id)
+            'producto_id': str(producto_id),
         }
-        
-        # Generate hash using ChecksService
+
+        # DEBUG PRINTS
+        print("==== CLIENT DEBUG ====")
+        print("PAYLOAD:", payload)
         hash_value = ChecksService.generar_hash_hmac(payload)
-        
-        # Prepare FormData
+        print("HASH GENERATED:", hash_value)
+        print("=======================")
+
+        # FormData sent to the inventory server
         data = {
-            'producto_id': payload['producto_id'],
-            'cantidad': payload['cantidad'],
             'bodega_id': payload['bodega_id'],
-            'hash': hash_value
+            'cantidad': payload['cantidad'],
+            'producto_id': payload['producto_id'],
+            'hash': hash_value,
         }
-        
-        # CALL OTHER SERVER HERE
+
+        # CALL INVENTORY MANAGER
         response = requests.post(
             f"{INVENTARIO_SERVICE_URL}/api/inventarios/reservar-producto/",
             data=data,
             timeout=5
         )
-        
+
+        # Return OK response
         if response.status_code == 200:
             return response.json()
-        else:
-            return {'success': False, 'error': f'Status {response.status_code}: {response.text}'}
-    
+
+        # Return detailed error message
+        return {
+            'success': False,
+            'error': f"Status {response.status_code}: {response.text}"
+        }
+
     except requests.exceptions.RequestException as e:
-        return {'success': False, 'error': f'Connection error to inventory manager: {str(e)}'}
+        return {
+            'success': False,
+            'error': f"Connection error to inventory manager: {str(e)}"
+        }
+
     except Exception as e:
-        return {'success': False, 'error': str(e)}
+        return {
+            'success': False,
+            'error': str(e)
+        }
 
 @require_http_methods(["POST"])
 def pedido_create(request):
