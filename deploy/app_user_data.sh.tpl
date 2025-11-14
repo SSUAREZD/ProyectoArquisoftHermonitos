@@ -296,6 +296,60 @@ WHERE NOT EXISTS (
     AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
 );
 
+-- ============================================================
+-- 5. CLIENTE + DIRECCIÓN + CONDICIÓN DE PAGO + CRÉDITO
+-- ============================================================
+
+-- Dirección principal del cliente
+INSERT INTO core_direccion (tipo, calle, ciudad, dpto, pais, referencias, contacto_nombre, tel)
+SELECT 
+  'Residencial',
+  'Calle 123 #45-67',
+  'Bogotá',
+  'Cundinamarca',
+  'Colombia',
+  'Frente al parque principal',
+  'Juan Pérez',
+  '3001234567'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_direccion WHERE calle='Calle 123 #45-67' AND ciudad='Bogotá'
+);
+
+-- Cliente
+INSERT INTO core_cliente (nombre, info_pago)
+SELECT 'Juan Pérez', 'Crédito empresarial'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_cliente WHERE nombre='Juan Pérez'
+);
+
+-- Condición de pago
+INSERT INTO core_condicionpago (nombre, info_pago)
+SELECT 'Pago a 30 días', 'Crédito a 30 días para empresa'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_condicionpago WHERE nombre='Pago a 30 días'
+);
+
+-- Orden de compra
+INSERT INTO core_ordencompracliente (cliente_id, condicion_pago_id)
+SELECT 
+  (SELECT id FROM core_cliente WHERE nombre='Juan Pérez'),
+  (SELECT id FROM core_condicionpago WHERE nombre='Pago a 30 días')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_ordencompracliente
+  WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+);
+
+-- Crédito del cliente
+INSERT INTO core_creditocliente (cliente_id, cupo_asignado, cupo_disponible, dias_plazo)
+SELECT 
+  (SELECT id FROM core_cliente WHERE nombre='Juan Pérez'),
+  5000000,   -- COP 5 millones
+  5000000,
+  30
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_creditocliente WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+);
+
 COMMIT;
 EOF
 # --- systemd service for Gunicorn on 0.0.0.0:8080 ---
