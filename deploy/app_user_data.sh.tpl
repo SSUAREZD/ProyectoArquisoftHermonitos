@@ -56,6 +56,9 @@ DATABASES = {
         "CONN_MAX_AGE": 60,
     }
 }
+COGNITO_REGION = "us-east-1"
+COGNITO_USER_POOL_ID = "us-east-1_tPnCimwiB"
+COGNITO_APP_CLIENT_ID = "593e5kv7f4fm12vmpldkfbe85e"
 PYEOF
 
 # --- Wait for the creation of the database ---
