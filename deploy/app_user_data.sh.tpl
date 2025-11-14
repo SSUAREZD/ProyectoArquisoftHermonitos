@@ -82,185 +82,150 @@ python3 manage.py migrate --noinput || (sleep 5 && python3 manage.py migrate --n
 # ---  population ---
 psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/${db_name}" -v ON_ERROR_STOP=1 <<'EOF' || true
 BEGIN;
--- Bodega (solo si no existe la de código BOD-001)
-INSERT INTO core_bodega (codigo, nombre, ciudad, direccion, capacidad, longitud, latitud)
-SELECT 'BOD-001', 'Bodega Central', 'Bogotá', 'Cra 7 # 72-41', 1000.00, -74.060, 4.664
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_bodega WHERE codigo = 'BOD-001'
-);
 
--- Ubicación (referenciando la bodega por código; evita duplicado por código de ubicación)
-INSERT INTO core_ubicacion (codigo, tipo, capacidad_max, dimensiones, estado, bodega_id)
-SELECT 'UB-01', 'Estanteria', 200.0, '2mx1mx1m', 'Disponible',
-(SELECT id FROM core_bodega WHERE codigo = 'BOD-001')
+----------------------------------------------------------
+-- 1) UBICACIÓN PRINCIPAL (NO TIENE bodega_id)
+----------------------------------------------------------
+INSERT INTO core_ubicacion (codigo, tipo, capacidad_max, dimensiones, estado)
+SELECT 'UB-01', 'Estanteria', 200.0, '2mx1mx1m', 'Disponible'
 WHERE NOT EXISTS (
   SELECT 1 FROM core_ubicacion WHERE codigo = 'UB-01'
 );
 
--- Productos (evita repetir por código/código de barras)
+----------------------------------------------------------
+-- 2) BODEGA PRINCIPAL que referencia a la UNICA UBICACION
+----------------------------------------------------------
+INSERT INTO core_bodega (codigo, nombre, ciudad, direccion, capacidad, longitud, latitud, ubicacion_id)
+SELECT
+  'BOD-001',
+  'Bodega Central',
+  'Bogotá',
+  'Cra 7 # 72-41',
+  1000.00,
+  -74.060,
+  4.664,
+  u.id
+FROM core_ubicacion u
+WHERE u.codigo = 'UB-01'
+AND NOT EXISTS (
+  SELECT 1 FROM core_bodega WHERE codigo = 'BOD-001'
+);
+
+----------------------------------------------------------
+-- 3) PRODUCTOS (MISMO BLOQUE)
+----------------------------------------------------------
+
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7701234567890', 'Electronico', 1.5, 0.002, 'PRD-001'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-001' OR codigo_barras = '7701234567890'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-001');
 
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7700987654321', 'Juguete', 0.3, 0.0005, 'PRD-002'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-002' OR codigo_barras = '7700987654321'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-002');
 
 -- Coca-Cola 1.5L
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7705001000001', 'Bebida', 1.5, 0.0015, 'PRD-003'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-003' OR codigo_barras = '7705001000001'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-003');
 
 -- Arroz Diana 5kg
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7702002000002', 'Alimento', 5.0, 0.0045, 'PRD-004'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-004' OR codigo_barras = '7702002000002'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-004');
 
 -- Taladro Bosch GSB 13 RE
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7709003000003', 'Herramienta', 1.8, 0.0032, 'PRD-005'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-005' OR codigo_barras = '7709003000003'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-005');
 
 -- Laptop Lenovo ThinkPad E14
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7708004000004', 'Electrónico', 1.6, 0.0041, 'PRD-006'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-006' OR codigo_barras = '7708004000004'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-006');
 
--- Caja Tornillos 2" x100 unidades
+-- Caja Tornillos 2" x100
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7703005000005', 'Ferretería', 0.4, 0.0006, 'PRD-007'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-007' OR codigo_barras = '7703005000005'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-007');
 
--- Pañales Huggies Etapa 3 (x30)
+-- Pañales Huggies Etapa 3
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7704006000006', 'Higiene', 1.1, 0.0021, 'PRD-008'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-008' OR codigo_barras = '7704006000006'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-008');
 
--- Aceite Motul 5100 4T 10W40 (1L)
+-- Aceite Motul 4T 10W40
 INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
 SELECT '7707007000007', 'Automotriz', 1.0, 0.0012, 'PRD-009'
-WHERE NOT EXISTS (
-  SELECT 1 FROM core_producto
-  WHERE codigo = 'PRD-009' OR codigo_barras = '7707007000007'
-);
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo='PRD-009');
 
--- Inventario (inserta solo si no hay registro producto+bodega)
--- PRD-001 en BOD-001
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 50, 5, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-001'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+----------------------------------------------------------
+-- 4) INVENTARIO (NUEVOS CAMPOS: producto_id, bodega_id, ubicacion_id)
+----------------------------------------------------------
 
--- PRD-002 en BOD-001
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 150, 10, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-002'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+-- Helper: obtener ids
+WITH bod AS (
+  SELECT id FROM core_bodega WHERE codigo = 'BOD-001'
+),
+ubi AS (
+  SELECT id FROM core_ubicacion WHERE codigo = 'UB-01'
+)
 
--- PRD-003 Coca-Cola 1.5L
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 120, 10, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-003'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 50, 5, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-001'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
 
--- PRD-004 Arroz Diana 5kg
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 60, 5, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-004'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 150, 10, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-002'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
 
--- PRD-005 Taladro Bosch
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 18, 2, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-005'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 120, 10, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-003'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
 
--- PRD-006 Laptop ThinkPad
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 25, 1, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-006'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 60, 5, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-004'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
 
--- PRD-007 Caja Tornillos
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 200, 15, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-007'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 18, 2, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-005'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
 
--- PRD-008 Pañales Huggies
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 90, 5, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-008'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 25, 1, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-006'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
 
--- PRD-009 Aceite Motul
-INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
-SELECT 40, 3, NOW(), p.id, b.id
-FROM core_producto p
-JOIN core_bodega b ON b.codigo = 'BOD-001'
-WHERE p.codigo = 'PRD-009'
-  AND NOT EXISTS (
-    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
-  );
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 200, 15, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-007'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
+
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 90, 5, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-008'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
+
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, producto_id, bodega_id, ubicacion_id)
+SELECT 40, 3, NOW(), p.id, b.id, u.id
+FROM core_producto p, bod b, ubi u
+WHERE p.codigo='PRD-009'
+AND NOT EXISTS (SELECT 1 FROM core_inventario WHERE producto_id=p.id AND bodega_id=b.id);
+
 COMMIT;
 EOF
-
 # --- systemd service for Gunicorn on 0.0.0.0:8080 ---
 cat >/etc/systemd/system/gunicorn.service <<'UNIT'
 [Unit]
