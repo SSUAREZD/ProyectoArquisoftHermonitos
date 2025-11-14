@@ -139,38 +139,42 @@ def inventario_delete(request):
 
 @require_http_methods(["POST"])
 def inventario_reservar(request):
-    """Reserve product quantity with integrity check"""
-    try:
-        # Get hash from request body
-        hash_recibido = request.POST.get('hash')
-        
-        if not hash_recibido:
-            return JsonResponse({'success': False, 'error': 'Missing hash parameter'}, status=400)
-        
-        # Prepare data to verify
-        data_to_verify = {
-            'inventario_id': request.POST.get('inventario_id'),
-            'cantidad': request.POST.get('cantidad'),
-        }
-        
-        # Verify integrity
-        if not ChecksService.verificar_integridad(hash_recibido, data_to_verify):
-            return JsonResponse({'success': False, 'error': 'Hash verification failed - Data integrity compromised'}, status=400)
-        
-        cantidad = int(data_to_verify['cantidad'])
-        
-        if cantidad <= 0:
-            return JsonResponse({'success': False, 'error': 'Quantity must be greater than 0'}, status=400)
-        
-        inventario = InventarioService.reservar_producto(data_to_verify['inventario_id'], cantidad)
-        return JsonResponse({
-            'success': True,
-            'inventario_id': inventario.id,
-            'disponible': inventario.cantidad_disponible,
-            'reservado': inventario.cantidad_reservada
-        })
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    hash_recibido = request.POST.get('hash')
+
+    if not hash_recibido:
+        return JsonResponse({'success': False, 'error': 'Missing hash parameter'}, status=400)
+
+    # MUST MATCH CLIENT EXACTLY
+    data_to_verify = {
+        'producto_id': request.POST.get('producto_id'),
+        'cantidad': request.POST.get('cantidad'),
+        'bodega_id': request.POST.get('bodega_id'),
+    }
+
+    if not ChecksService.verificar_integridad(hash_recibido, data_to_verify):
+        return JsonResponse({'success': False, 'error': 'Hash verification failed'}, status=403)
+
+    # NOW use the product + bodega to get the inventory row
+    inventario = Inventario.objects.filter(
+        producto_id=data_to_verify['producto_id'],
+        bodega_id=data_to_verify['bodega_id']
+    ).first()
+
+    if not inventario:
+        return JsonResponse({'success': False, 'error': 'Inventory not found'}, status=404)
+
+    cantidad = int(data_to_verify['cantidad'])
+    if cantidad <= 0:
+        return JsonResponse({'success': False, 'error': 'Quantity must be > 0'}, status=400)
+
+    inventario = InventarioService.reservar_producto(inventario.id, cantidad)
+
+    return JsonResponse({
+        'success': True,
+        'inventario_id': inventario.id,
+        'disponible': inventario.cantidad_disponible,
+        'reservado': inventario.cantidad_reservada
+    })
 
 @require_http_methods(["POST"])
 def inventario_liberar_reserva(request):
