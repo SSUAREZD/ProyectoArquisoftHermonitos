@@ -41,6 +41,10 @@ def inventario_create(request):
             'cantidad_reservada': request.POST.get('cantidad_reservada', '0'),
         }
         
+        print("HASH REC:", hash_recibido)
+        print("EXPECTED:", ChecksService.generar_hash_hmac(data_to_verify))
+        print("DATA:", data_to_verify)
+        
         # Verify integrity
         if not ChecksService.verificar_integridad(hash_recibido, data_to_verify):
             return JsonResponse({'success': False, 'error': 'Hash verification failed - Data integrity compromised'}, status=400)
