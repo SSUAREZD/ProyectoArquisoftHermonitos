@@ -4,7 +4,7 @@ from django.shortcuts import render
 import json
 from core.services.inventario_service import InventarioService
 from core.services.checks_service import ChecksService
-from core.models import Bodega, Producto, Ubicacion
+from core.models import Bodega, Producto, Ubicacion, Inventario
 
 @require_http_methods(["GET"])
 def inventario_list(request):
@@ -144,20 +144,21 @@ def inventario_reservar(request):
     if not hash_recibido:
         return JsonResponse({'success': False, 'error': 'Missing hash parameter'}, status=400)
 
-    # MUST MATCH CLIENT EXACTLY
+    # Canonical payload - all strings so it matches client hashing
     data_to_verify = {
-        'producto_id': request.POST.get('producto_id'),
-        'cantidad': request.POST.get('cantidad'),
-        'bodega_id': request.POST.get('bodega_id'),
+        'producto_id': str(request.POST.get('producto_id')),
+        'cantidad': str(request.POST.get('cantidad')),
+        'bodega_id': str(request.POST.get('bodega_id')),
     }
 
+    # Verificación de hash
     if not ChecksService.verificar_integridad(hash_recibido, data_to_verify):
         return JsonResponse({'success': False, 'error': 'Hash verification failed'}, status=403)
 
-    # NOW use the product + bodega to get the inventory row
+    # Buscar inventario correcto
     inventario = Inventario.objects.filter(
-        producto_id=data_to_verify['producto_id'],
-        bodega_id=data_to_verify['bodega_id']
+        productos_id=data_to_verify['producto_id'],
+        bodegas_id=data_to_verify['bodega_id']
     ).first()
 
     if not inventario:
