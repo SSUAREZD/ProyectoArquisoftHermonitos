@@ -29,17 +29,14 @@ def dashboard_bodegas_view(request):
 # -----------------------------
 
 def bodegas_data_api(request):
-    """Devuelve { id_bodega: {latitud, longitud, nombre, direccion, capacidad, total_disponible, total_reservado, ocupacion_pct} }.
-    ocupacion_pct = ( (disponible + reservado) / capacidad ) * 100 si capacidad > 0.
-    Si se pasa ?bodega_id= filtra solo esa bodega.
-    (Se mantiene compatibilidad opcional: ya no se usa 'promedio', pero si se quisiera podría añadirse.)"""
+    """Devuelve datos de bodegas para el mapa."""
     bodega_id = request.GET.get('bodega_id')
     qs = Bodega.objects.all()
     if bodega_id:
         qs = qs.filter(id=bodega_id)
     data = {}
     for b in qs:
-        invs = Inventario.objects.filter(bodegas=b)
+        invs = Inventario.objects.filter(bodega=b)  # Changed from bodegas=b
         agg = invs.aggregate(
             disp=Sum('cantidad_disponible'),
             res=Sum('cantidad_reservada'),
@@ -63,10 +60,6 @@ def bodegas_data_api(request):
         }
     return JsonResponse(data)
 
-# -----------------------------
-# APIs NUEVAS PARA EL DASHBOARD
-# -----------------------------
-
 def kpis_api(request):
     """KPIs globales o filtrados por ?bodega_id="""
     bodega_id = request.GET.get('bodega_id')
@@ -75,9 +68,9 @@ def kpis_api(request):
         bodega = Bodega.objects.filter(id=bodega_id).first()
 
     if bodega:
-        inv_qs = Inventario.objects.filter(bodegas=bodega)
+        inv_qs = Inventario.objects.filter(bodega=bodega)  # Changed from bodegas=bodega
         total_warehouses = 1
-        sku_count = inv_qs.values('productos').distinct().count()
+        sku_count = inv_qs.values('producto').distinct().count()  # Changed from productos
         stockout_skus = inv_qs.filter(cantidad_disponible=0).count()
         total_disponible = inv_qs.aggregate(total=Sum('cantidad_disponible'))['total'] or 0
         total_reservado = inv_qs.aggregate(total=Sum('cantidad_reservada'))['total'] or 0
@@ -85,7 +78,7 @@ def kpis_api(request):
     else:
         inv_qs = Inventario.objects.all()
         total_warehouses = Bodega.objects.count()
-        sku_count = inv_qs.values('productos').distinct().count()
+        sku_count = inv_qs.values('producto').distinct().count()  # Changed from productos
         stockout_skus = inv_qs.filter(cantidad_disponible=0).count()
         total_disponible = inv_qs.aggregate(total=Sum('cantidad_disponible'))['total'] or 0
         total_reservado = inv_qs.aggregate(total=Sum('cantidad_reservada'))['total'] or 0
@@ -108,7 +101,7 @@ def mix_disponible_reservado_api(request):
         b = Bodega.objects.filter(id=bodega_id).first()
         if not b:
             return JsonResponse({"labels": [], "disponible": [], "reservado": []})
-        invs = Inventario.objects.filter(bodegas=b)
+        invs = Inventario.objects.filter(bodega=b)  # Changed from bodegas=b
         disp = invs.aggregate(total=Sum('cantidad_disponible'))['total'] or 0
         res = invs.aggregate(total=Sum('cantidad_reservada'))['total'] or 0
         labels.append(b.nombre)
@@ -117,7 +110,7 @@ def mix_disponible_reservado_api(request):
     else:
         for b in Bodega.objects.all():
             labels.append(b.nombre)
-            invs = Inventario.objects.filter(bodegas=b)
+            invs = Inventario.objects.filter(bodega=b)  # Changed from bodegas=b
             disp = invs.aggregate(total=Sum('cantidad_disponible'))['total'] or 0
             res = invs.aggregate(total=Sum('cantidad_reservada'))['total'] or 0
             disponible.append(disp)
@@ -130,7 +123,7 @@ def aging_api(request):
     buckets = {"0-30": 0, "31-60": 0, "61-90": 0, ">90": 0}
     invs = Inventario.objects.all()
     if bodega_id:
-        invs = invs.filter(bodegas_id=bodega_id)
+        invs = invs.filter(bodega_id=bodega_id)  # Changed from bodegas_id
     for inv in invs:
         if not inv.ultima_actualizacion:
             continue
@@ -146,9 +139,9 @@ def top_skus_api(request):
     bodega_id = request.GET.get('bodega_id')
     qs_base = Inventario.objects.all()
     if bodega_id:
-        qs_base = qs_base.filter(bodegas_id=bodega_id)
+        qs_base = qs_base.filter(bodega_id=bodega_id)  # Changed from bodegas_id
     qs = (qs_base
-          .values(nombre=F('productos__codigo'))
+          .values(nombre=F('producto__codigo'))  # Changed from productos__codigo
           .annotate(total=Sum('cantidad_disponible'))
           .order_by('-total')[:5])
     labels = [x['nombre'] for x in qs]
@@ -159,12 +152,11 @@ def tareas_estado_api(request):
     bodega_id = request.GET.get('bodega_id')
     qs_tasks = TareaLogistica.objects.all()
     if bodega_id:
-        # Filtra tareas ligadas a algún trabajador cuya bodegaAsignada coincida
         qs_tasks = qs_tasks.filter(
-            Q(alistadores__bodegaAsignada_id=bodega_id) |
-            Q(verificadores__bodegaAsignada_id=bodega_id) |
-            Q(empacadores__bodegaAsignada_id=bodega_id) |
-            Q(administradores__bodegaAsignada_id=bodega_id)
+            Q(alistador__bodega_asignada_id=bodega_id) |
+            Q(verificador__bodega_asignada_id=bodega_id) |
+            Q(empacador__bodega_asignada_id=bodega_id) |
+            Q(administrador__bodega_asignada_id=bodega_id)
         )
     qs = (qs_tasks
           .values('estado')
