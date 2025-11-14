@@ -154,6 +154,10 @@ def inventario_reservar(request):
         'cantidad': str(request.POST.get('cantidad')),
         'bodega_id': str(request.POST.get('bodega_id')),
     }
+    
+    print("HASH REC:", hash_recibido)
+    print("EXPECTED:", ChecksService.generar_hash_hmac(data_to_verify))
+    print("DATA:", data_to_verify)
 
     # Verificación de hash
     if not ChecksService.verificar_integridad(hash_recibido, data_to_verify):
