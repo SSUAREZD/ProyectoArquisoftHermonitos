@@ -7,6 +7,7 @@ from core.services.pedido_service import PedidoService
 from core.services.checks_service import ChecksService
 from core.models import Cliente, Direccion, Producto, Inventario, ProductoPedido
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 INVENTARIO_SERVICE_URL = settings.INVENTARIO_SERVICE_URL
 HASH_SECRET = settings.HASH_KEY
@@ -98,6 +99,7 @@ def call_inventario_reservar(producto_id, cantidad, bodega_id=1):
             'error': str(e)
         }
 
+@csrf_exempt
 @require_http_methods(["POST"])
 def pedido_create(request):
     """Create pedido and reserve inventory on other server"""
