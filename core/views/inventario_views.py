@@ -143,30 +143,39 @@ def inventario_delete(request):
 
 @require_http_methods(["POST"])
 def inventario_reservar(request):
+    """
+    Reserve product quantity with integrity check
+    """
     hash_recibido = request.POST.get('hash')
 
     if not hash_recibido:
         return JsonResponse({'success': False, 'error': 'Missing hash parameter'}, status=400)
 
-    # Canonical payload - all strings so it matches client hashing
+    # Canonical payload - MUST match client exactly and sort_keys=True alphabetical order
     data_to_verify = {
-        'producto_id': str(request.POST.get('producto_id')),
-        'cantidad': str(request.POST.get('cantidad')),
         'bodega_id': str(request.POST.get('bodega_id')),
+        'cantidad': str(request.POST.get('cantidad')),
+        'producto_id': str(request.POST.get('producto_id')),
     }
-    
-    print("HASH REC:", hash_recibido)
-    print("EXPECTED:", ChecksService.generar_hash_hmac(data_to_verify))
-    print("DATA:", data_to_verify)
 
-    # Verificación de hash
+    # DEBUG PRINTS
+    print("===== INVENTARIO DEBUG =====")
+    print("HASH RECIBIDO:", hash_recibido)
+    print("HASH ESPERADO:", ChecksService.generar_hash_hmac(data_to_verify))
+    print("DATA NORMALIZADO:", data_to_verify)
+    print("============================")
+
+    # HASH verification
     if not ChecksService.verificar_integridad(hash_recibido, data_to_verify):
-        return JsonResponse({'success': False, 'error': 'Hash verification failed'}, status=403)
+        return JsonResponse({
+            'success': False,
+            'error': 'Hash verification failed'
+        }, status=403)
 
     # Buscar inventario correcto
     inventario = Inventario.objects.filter(
-        productos_id=data_to_verify['producto_id'],
-        bodegas_id=data_to_verify['bodega_id']
+        producto_id=data_to_verify['producto_id'],
+        bodega_id=data_to_verify['bodega_id']
     ).first()
 
     if not inventario:
@@ -176,6 +185,7 @@ def inventario_reservar(request):
     if cantidad <= 0:
         return JsonResponse({'success': False, 'error': 'Quantity must be > 0'}, status=400)
 
+    # Reservar
     inventario = InventarioService.reservar_producto(inventario.id, cantidad)
 
     return JsonResponse({
