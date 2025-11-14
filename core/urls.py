@@ -18,7 +18,7 @@ urlpatterns = [
 
     # Endpoints CRUD para Producto
     path('api/productos/', producto_views.productos_list_create_api, name='productos_list_create_api'),
-    path('api/productos/<int:producto_id>/', producto_views.producto_detail_api, name='producto_detail_api'),
+    path('api/producto/<int:producto_id>/', producto_views.producto_detail_api, name='producto_detail_api'),
     
     #------ Endpoints Inventario------
     path("inventario/", inventario_views.inventario_list, name="inventario_list"),
