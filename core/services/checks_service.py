@@ -12,47 +12,52 @@ class ChecksService:
     
     @staticmethod
     def generar_hash(mensaje):
-        """Generate a hash for a message"""
-        if isinstance(mensaje, dict):
-            mensaje = json.dumps(mensaje, sort_keys=True)
-        elif not isinstance(mensaje, str):
-            mensaje = str(mensaje)
-        
-        return hashlib.sha256(mensaje.encode()).hexdigest()
+        """Generate a simple SHA256 hex digest for a message (not recommended for transport integrity)."""
+        canonical = ChecksService._canonicalize(mensaje)
+        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
     
     @staticmethod
     def generar_hash_hmac(mensaje):
-        """Generate HMAC hash for a message (more secure)"""
-        if isinstance(mensaje, dict):
-            mensaje = json.dumps(mensaje, sort_keys=True)
-        elif not isinstance(mensaje, str):
-            mensaje = str(mensaje)
-        
-        return hmac.new(
-            ChecksService.SECRET_KEY.encode(),
-            mensaje.encode(),
-            hashlib.sha256
-        ).hexdigest()
+        """Generate HMAC-SHA256 hex digest for a message using the configured secret key."""
+        canonical = ChecksService._canonicalize(mensaje)
+        key = (ChecksService.SECRET_KEY or "").encode('utf-8')
+        return hmac.new(key, canonical.encode('utf-8'), hashlib.sha256).hexdigest()
     
     @staticmethod
     def verificar_integridad(hash_recibido, mensaje):
         """
-        Verify if the received hash matches the message hash
-        
-        Args:
-            hash_recibido: Hash received from client
-            mensaje: The message/data to verify
-        
-        Returns:
-            bool: True if hash is valid, False otherwise
+        Verify if the received hash matches the message HMAC.
+        Returns True when hash matches, False otherwise.
         """
         try:
-            # Generate hash for the message
-            hash_calculado = ChecksService.generar_hash_hmac(mensaje)
-            
-            # Compare using constant-time comparison to prevent timing attacks
-            return hmac.compare_digest(hash_recibido, hash_calculado)
-        except Exception as e:
-            print(f"Error verifying hash: {str(e)}")
+            if not hash_recibido:
+                return False
+            expected = ChecksService.generar_hash_hmac(mensaje)
+            # constant-time compare
+            return hmac.compare_digest(str(hash_recibido), expected)
+        except Exception:
             return False
-    
+
+    @staticmethod
+    def _canonicalize(mensaje):
+        """
+        Produce a canonical string representation for the message:
+         - If dict/list -> JSON with sorted keys and no extra spaces
+         - If string that contains JSON -> parse then canonicalize
+         - Otherwise -> plain string
+        This must match the client's stable stringify (sorted keys, no spaces).
+        """
+        # If client sent a JSON string, try to parse it to normalize
+        if isinstance(mensaje, str):
+            try:
+                parsed = json.loads(mensaje)
+                mensaje = parsed
+            except Exception:
+                # leave as string
+                return mensaje
+
+        if isinstance(mensaje, (dict, list)):
+            # separators=(',', ':') removes spaces -> deterministic compact form
+            return json.dumps(mensaje, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+        # fallback
+        return str(mensaje)
