@@ -58,7 +58,7 @@ DATABASES = {
 }
 COGNITO_REGION = "us-east-1"
 COGNITO_USER_POOL_ID = "us-east-1_tPnCimwiB"
-COGNITO_APP_CLIENT_ID = "593e5kv7f4fm12vmpldkfbe85e"
+COGNITO_APP_CLIENT_ID = "593e5kv7f4fm12vmpldkfbe8se"
 PYEOF
 
 # --- Wait for the creation of the database ---
