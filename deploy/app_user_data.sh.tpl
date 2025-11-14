@@ -79,8 +79,9 @@ cd "$DJANGO_DIR"
 . .venv/bin/activate
 python3 manage.py migrate --noinput || (sleep 5 && python3 manage.py migrate --noinput)
 
-# --- small population (idempotente) ---
+# ---  population ---
 psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/${db_name}" -v ON_ERROR_STOP=1 <<'EOF' || true
+BEGIN;
 -- Bodega (solo si no existe la de código BOD-001)
 INSERT INTO core_bodega (codigo, nombre, ciudad, direccion, capacidad, longitud, latitud)
 SELECT 'BOD-001', 'Bodega Central', 'Bogotá', 'Cra 7 # 72-41', 1000.00, -74.060, 4.664
@@ -91,7 +92,7 @@ WHERE NOT EXISTS (
 -- Ubicación (referenciando la bodega por código; evita duplicado por código de ubicación)
 INSERT INTO core_ubicacion (codigo, tipo, capacidad_max, dimensiones, estado, bodega_id)
 SELECT 'UB-01', 'Estanteria', 200.0, '2mx1mx1m', 'Disponible',
-       (SELECT id FROM core_bodega WHERE codigo = 'BOD-001')
+(SELECT id FROM core_bodega WHERE codigo = 'BOD-001')
 WHERE NOT EXISTS (
   SELECT 1 FROM core_ubicacion WHERE codigo = 'UB-01'
 );
@@ -109,6 +110,62 @@ SELECT '7700987654321', 'Juguete', 0.3, 0.0005, 'PRD-002'
 WHERE NOT EXISTS (
   SELECT 1 FROM core_producto
   WHERE codigo = 'PRD-002' OR codigo_barras = '7700987654321'
+);
+
+-- Coca-Cola 1.5L
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7705001000001', 'Bebida', 1.5, 0.0015, 'PRD-003'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-003' OR codigo_barras = '7705001000001'
+);
+
+-- Arroz Diana 5kg
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7702002000002', 'Alimento', 5.0, 0.0045, 'PRD-004'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-004' OR codigo_barras = '7702002000002'
+);
+
+-- Taladro Bosch GSB 13 RE
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7709003000003', 'Herramienta', 1.8, 0.0032, 'PRD-005'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-005' OR codigo_barras = '7709003000003'
+);
+
+-- Laptop Lenovo ThinkPad E14
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7708004000004', 'Electrónico', 1.6, 0.0041, 'PRD-006'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-006' OR codigo_barras = '7708004000004'
+);
+
+-- Caja Tornillos 2" x100 unidades
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7703005000005', 'Ferretería', 0.4, 0.0006, 'PRD-007'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-007' OR codigo_barras = '7703005000005'
+);
+
+-- Pañales Huggies Etapa 3 (x30)
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7704006000006', 'Higiene', 1.1, 0.0021, 'PRD-008'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-008' OR codigo_barras = '7704006000006'
+);
+
+-- Aceite Motul 5100 4T 10W40 (1L)
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7707007000007', 'Automotriz', 1.0, 0.0012, 'PRD-009'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_producto
+  WHERE codigo = 'PRD-009' OR codigo_barras = '7707007000007'
 );
 
 -- Inventario (inserta solo si no hay registro producto+bodega)
@@ -131,6 +188,77 @@ WHERE p.codigo = 'PRD-002'
   AND NOT EXISTS (
     SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
   );
+
+-- PRD-003 Coca-Cola 1.5L
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+SELECT 120, 10, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-003'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
+
+-- PRD-004 Arroz Diana 5kg
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+SELECT 60, 5, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-004'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
+
+-- PRD-005 Taladro Bosch
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+SELECT 18, 2, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-005'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
+
+-- PRD-006 Laptop ThinkPad
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+SELECT 25, 1, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-006'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
+
+-- PRD-007 Caja Tornillos
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+SELECT 200, 15, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-007'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
+
+-- PRD-008 Pañales Huggies
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+SELECT 90, 5, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-008'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
+
+-- PRD-009 Aceite Motul
+INSERT INTO core_inventario (cantidad_disponible, cantidad_reservada, ultima_actualizacion, productos_id, bodegas_id)
+SELECT 40, 3, NOW(), p.id, b.id
+FROM core_producto p
+JOIN core_bodega b ON b.codigo = 'BOD-001'
+WHERE p.codigo = 'PRD-009'
+  AND NOT EXISTS (
+    SELECT 1 FROM core_inventario i WHERE i.productos_id = p.id AND i.bodegas_id = b.id
+  );
+COMMIT;
 EOF
 
 # --- systemd service for Gunicorn on 0.0.0.0:8080 ---

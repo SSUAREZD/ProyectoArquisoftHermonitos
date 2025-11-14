@@ -77,26 +77,6 @@ resource "aws_security_group" "traffic_db" {
 }
 
 ############################
-# EC2 running PostgreSQL 16
-############################
-resource "aws_instance" "db_server" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t3.micro"
-  subnet_id                   = local.ec2_subnet_id
-  vpc_security_group_ids      = [aws_security_group.traffic_db.id]
-  associate_public_ip_address = true
-
-  tags = { Name = "traffic_db_server" }
-
-  user_data = templatefile("${path.module}/db_user_data.sh.tpl", {
-    vpc_cidr    = data.aws_vpc.default.cidr_block
-    db_name     = "db_proyect"
-    db_user     = "Administrator"
-    db_password = "Arquisoft2502"
-  })
-}
-
-############################
 # ALB Security Group (80)
 ############################
 resource "aws_security_group" "alb_sg" {
@@ -123,7 +103,7 @@ resource "aws_security_group" "alb_sg" {
 }
 
 ############################
-# App Security Group (8080 from ALB; SSH for debug)
+# App Inventario Security Group (8080 from ALB; SSH for debug)
 ############################
 resource "aws_security_group" "app_sg" {
   name        = "asg-app-sg"
@@ -155,6 +135,88 @@ resource "aws_security_group" "app_sg" {
 
   tags = { Name = "asg-app-sg" }
 }
+############################
+# App Pedidos Security Group (8080 from ALB; SSH for debug)
+############################
+
+resource "aws_security_group" "traffic_manejador" {
+  name        = "traffic_manejador"
+  description = "Ingress 8090 only; allow all egress"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    description = "App port manejador"
+    from_port   = 8090
+    to_port     = 8090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "SSH (testing)"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "traffic_manejador" }
+}
+
+############################
+# EC2 running App Pedidos
+############################
+
+resource "aws_instance" "manejador" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t3.medium"
+  subnet_id                   = local.ec2_subnet_id
+  vpc_security_group_ids      = [aws_security_group.traffic_manejador.id]
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "traffic_manejador"
+  }
+
+  user_data = templatefile("${path.module}/manejador_user_data.sh.tpl", {
+    repo_url    = "https://github.com/SSUAREZD/ProyectoArquisoftHermonitos.git"
+    branch      = "manejador-pedidos"
+    db_host     = aws_instance.db_server.private_ip
+    db_name     = "db_proyect"
+    db_user     = "Administrator"
+    db_password = "Arquisoft2502"
+    db_port     = 5432
+    inventario_url = "http://${aws_instance.inventario.public_ip}:8080"
+  })
+}
+
+############################
+# EC2 running PostgreSQL 16
+############################
+resource "aws_instance" "db_server" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t3.micro"
+  subnet_id                   = local.ec2_subnet_id
+  vpc_security_group_ids      = [aws_security_group.traffic_db.id]
+  associate_public_ip_address = true
+
+  tags = { Name = "traffic_db_server" }
+
+  user_data = templatefile("${path.module}/db_user_data.sh.tpl", {
+    vpc_cidr    = data.aws_vpc.default.cidr_block
+    db_name     = "db_proyect"
+    db_user     = "Administrator"
+    db_password = "Arquisoft2502"
+  })
+}
+
 
 ############################
 # ALB + Target Group + Listener
@@ -314,4 +376,8 @@ output "alb_dns_name" {
 
 output "db_public_ip" {
   value = aws_instance.db_server.public_ip
+}
+
+output "manejador_public_ip" {
+  value = aws_instance.manejador.public_ip
 }
