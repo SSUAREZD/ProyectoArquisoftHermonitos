@@ -193,7 +193,7 @@ resource "aws_instance" "manejador" {
     db_user     = "Administrator"
     db_password = "Arquisoft2502"
     db_port     = 5432
-    inventario_url = "http://${aws_instance.inventario.public_ip}:8080"
+    inventario_url = "http://${aws_lb.app_alb.dns_name}"
   })
 }
 
