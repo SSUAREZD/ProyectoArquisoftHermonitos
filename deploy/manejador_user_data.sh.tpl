@@ -22,7 +22,7 @@ pip install --upgrade pip
 if [ -f requirements.txt ]; then
   pip install -r requirements.txt || true
 fi
-pip install "psycopg2-binary>=2.9" Pillow
+pip install "psycopg2-binary>=2.9" Pillow requests
 
 # Create settings_local WITHOUT CHANGING SECRET_KEY
 SETTINGS_DIR="proyectoArquisoft"
@@ -41,7 +41,21 @@ DATABASES = {
 }
 
 INVENTARIO_SERVICE_URL = "${inventario_url}"
+
+# Allow external access (required for EC2 public access)
+ALLOWED_HOSTS = ["*"]
 PYEOF
+
+# Ensure settings.py loads settings_local.py
+SETTINGS_MAIN="$SETTINGS_DIR/settings.py"
+grep -q "settings_local" "$SETTINGS_MAIN" || cat >> "$SETTINGS_MAIN" <<'EOF'
+
+# Auto-included by bootstrap
+try:
+    from .settings_local import *
+except Exception:
+    pass
+EOF
 
 # Run migrations
 python3 manage.py migrate --noinput || true
