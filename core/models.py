@@ -1,122 +1,62 @@
 from django.db import models
 
-# ----------- Trabajadores Abstractos y Subclases -----------
-class Trabajador(models.Model):
+
+# ============================================================
+#                      USUARIO 
+# ============================================================
+
+class Usuario(models.Model):
     nombre = models.CharField(max_length=100)
+
     class Meta:
         abstract = True
 
-class LiderLogistica(Trabajador):
+
+class LiderLogistica(Usuario):
     pass
 
-class Alistador(Trabajador):
-    liderLogistica = models.ForeignKey('LiderLogistica', on_delete=models.SET_NULL, null=True)
-    bodegaAsignada = models.ForeignKey('Bodega', related_name='alistadores', blank=True, null=True, on_delete=models.SET_NULL)
 
-class Verificador(Trabajador):
-    liderLogistica = models.ForeignKey('LiderLogistica', on_delete=models.SET_NULL, null=True)
-    bodegaAsignada = models.ForeignKey('Bodega', related_name='verificadores', blank=True, null=True, on_delete=models.SET_NULL)
+class Alistador(Usuario):
+    lider_logistica = models.ForeignKey(LiderLogistica, null=True, on_delete=models.SET_NULL)
+    bodega_asignada = models.ForeignKey('Bodega', null=True, blank=True, on_delete=models.SET_NULL,
+                                        related_name='alistadores')
 
-class Empacador(Trabajador):
-    liderLogistica = models.ForeignKey('LiderLogistica', on_delete=models.SET_NULL, null=True)
-    bodegaAsignada = models.ForeignKey('Bodega', related_name='empacadores', blank=True, null=True, on_delete=models.SET_NULL)
 
-class Administrador(Trabajador):
-    bodegaAsignada = models.ForeignKey('Bodega', related_name='administradores', blank=True, null=True, on_delete=models.SET_NULL)
+class Verificador(Usuario):
+    lider_logistica = models.ForeignKey(LiderLogistica, null=True, on_delete=models.SET_NULL)
+    bodega_asignada = models.ForeignKey('Bodega', null=True, blank=True, on_delete=models.SET_NULL,
+                                        related_name='verificadores')
 
-class Vendedor(Trabajador):
-    bodegaAsignada = models.ForeignKey('Bodega', related_name='vendedores', blank=True, null=True, on_delete=models.SET_NULL)
 
-class Contador(Trabajador):
-    bodegaAsignada = models.ForeignKey('Bodega', related_name='contadores', blank=True, null=True, on_delete=models.SET_NULL)
+class Empacador(Usuario):
+    lider_logistica = models.ForeignKey(LiderLogistica, null=True, on_delete=models.SET_NULL)
+    bodega_asignada = models.ForeignKey('Bodega', null=True, blank=True, on_delete=models.SET_NULL,
+                                        related_name='empacadores')
 
-class Facturador(Trabajador):
-    bodegaAsignada = models.ForeignKey('Bodega', related_name='facturadores', blank=True, null=True, on_delete=models.SET_NULL)
-# ----------------------------------------------------------
-class Pedido(models.Model):
-    precio_calculado = models.DecimalField(max_digits=10, decimal_places=2)
-    guiasEnvio = models.ForeignKey('GuiaEnvio', on_delete=models.SET_NULL, null=True)
-    direccion = models.OneToOneField('Direccion', on_delete=models.SET_NULL, null=True, related_name='pedido_asociado')
-    clientes = models.ForeignKey('Cliente', on_delete=models.SET_NULL, null=True)
-    estadosPedido = models.ForeignKey('EstadoPedido', on_delete=models.SET_NULL, null=True)
 
-class Bodega(models.Model):
-    codigo = models.CharField(max_length=50)
-    nombre = models.CharField(max_length=100)
-    ciudad = models.CharField(max_length=100)
-    latitud = models.FloatField(null=True, blank=True)
-    longitud = models.FloatField(null=True, blank=True)
-    direccion = models.CharField(max_length=255)
-    capacidad = models.DecimalField(max_digits=10, decimal_places=2)
-    ubicacion = models.OneToOneField('Ubicacion', on_delete=models.SET_NULL, null=True, related_name='bodega_asociada')
+class Administrador(Usuario):
+    bodega_asignada = models.ForeignKey('Bodega', null=True, blank=True, on_delete=models.SET_NULL,
+                                        related_name='administradores')
 
-class Producto(models.Model):
-    codigo_barras = models.CharField(max_length=100)
-    tipo = models.CharField(max_length=100)
-    peso = models.FloatField()
-    volumen = models.FloatField()
-    codigo = models.CharField(max_length=50)
 
-class GuiaEnvio(models.Model):
-    numero_guia = models.IntegerField()
-    direccion = models.CharField(max_length=255)
-    transportadora = models.CharField(max_length=100)
-    estado = models.CharField(max_length=100)
-    url = models.URLField()
-    transportadoras = models.ForeignKey('Transportadora', on_delete=models.SET_NULL, null=True)
+class Vendedor(Usuario):
+    bodega_asignada = models.ForeignKey('Bodega', null=True, blank=True, on_delete=models.SET_NULL,
+                                        related_name='vendedores')
 
-class Cliente(models.Model):
-    nombre = models.CharField(max_length=100)
-    info_pago = models.CharField(max_length=255)
 
-class Factura(models.Model):
-    metodo_pago = models.CharField(max_length=100)
-    fecha = models.DateTimeField()
-    pedidos = models.ForeignKey('Cliente', on_delete=models.SET_NULL, null=True)
+class Contador(Usuario):
+    bodega_asignada = models.ForeignKey('Bodega', null=True, blank=True, on_delete=models.SET_NULL,
+                                        related_name='contadores')
 
-class EstadoPedido(models.Model):
-    nombre = models.CharField(max_length=100)
-    fecha_hora = models.DateTimeField()
-    asignado = models.CharField(max_length=100)
-    observacion = models.TextField(blank=True, null=True)
-    evidencias = models.ForeignKey('Evidencia',on_delete=models.SET_NULL, null=True)
 
-class DetallePedido(models.Model):
-    cantidad = models.IntegerField()
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
-    pedidos = models.ForeignKey('Pedido', on_delete=models.SET_NULL, null=True)
-    productos = models.ForeignKey('Producto', on_delete=models.SET_NULL, null=True)
+class Facturador(Usuario):
+    bodega_asignada = models.ForeignKey('Bodega', null=True, blank=True, on_delete=models.SET_NULL,
+                                        related_name='facturadores')
 
-class Transportadora(models.Model):
-    nombre = models.CharField(max_length=100)
 
-class Inventario(models.Model):
-    cantidad_disponible = models.IntegerField()
-    cantidad_reservada = models.IntegerField()
-    ultima_actualizacion = models.DateTimeField()
-    productos = models.ForeignKey('Producto', on_delete=models.SET_NULL, null=True)
-    bodegas = models.ForeignKey('Bodega', on_delete=models.CASCADE, related_name='inventarios')
-    ubicaciones = models.ForeignKey('Ubicacion', on_delete=models.SET_NULL, null=True)
-
-class Ubicacion(models.Model):
-    codigo = models.CharField(max_length=50)
-    tipo = models.CharField(max_length=100)
-    capacidad_max = models.FloatField()
-    dimensiones = models.CharField(max_length=255)
-    estado = models.CharField(max_length=100)
-    bodega = models.OneToOneField('Bodega', on_delete=models.CASCADE, related_name='ubicacion_actual')
-
-class Evidencia(models.Model):
-    tipo = models.CharField(max_length=100)
-    url = models.URLField()
-    foto = models.ImageField(upload_to='evidencias/')
-    fecha_captura = models.DateTimeField()
-    observacion = models.TextField(blank=True, null=True)
-    capturado_por = models.CharField(max_length=100)
-    alistadores = models.ForeignKey('Alistador', on_delete=models.SET_NULL, null=True)
-    empacadores = models.ForeignKey('Empacador', on_delete=models.SET_NULL, null=True)
-    verificadores = models.ForeignKey('Verificador', on_delete=models.SET_NULL, null=True)
+# ============================================================
+#                          DIRECCION
+# ============================================================
 
 class Direccion(models.Model):
     tipo = models.CharField(max_length=50)
@@ -127,17 +67,186 @@ class Direccion(models.Model):
     referencias = models.TextField(blank=True, null=True)
     contacto_nombre = models.CharField(max_length=100)
     tel = models.CharField(max_length=20)
-    pedido = models.OneToOneField('Pedido', on_delete=models.CASCADE, null=True, related_name='direccion_entrega')
+
+
+# ============================================================
+#                          CLIENTE
+# ============================================================
+
+class Cliente(models.Model):
+    nombre = models.CharField(max_length=100)
+    info_pago = models.CharField(max_length=255)
+
+
+class CondicionPago(models.Model):
+    nombre = models.CharField(max_length=100)
+    info_pago = models.CharField(max_length=255)
+
+
+class OrdenCompraCliente(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ordenes_compra')
+    condicion_pago = models.ForeignKey(CondicionPago, on_delete=models.SET_NULL, null=True)
+
+
+class CreditoCliente(models.Model):
+    cliente = models.OneToOneField(Cliente, on_delete=models.CASCADE, related_name='credito')
+    cupo_asignado = models.DecimalField(max_digits=12, decimal_places=2)
+    cupo_disponible = models.DecimalField(max_digits=12, decimal_places=2)
+    dias_plazo = models.IntegerField()
+
+
+# ============================================================
+#                          PRODUCTO
+# ============================================================
+
+class Producto(models.Model):
+    codigo_barras = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=100)
+    peso = models.FloatField()
+    volumen = models.FloatField()
+    codigo = models.CharField(max_length=50)
+
+
+# ============================================================
+#                      PEDIDO + DETALLES
+# ============================================================
+
+class Pedido(models.Model):
+    precio_calculado = models.DecimalField(max_digits=12, decimal_places=2)
+    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True)
+    direccion = models.ForeignKey(Direccion, on_delete=models.SET_NULL, null=True)
+    condicion_pago = models.ForeignKey(CondicionPago, null=True, on_delete=models.SET_NULL)
+    orden_compra = models.ForeignKey(OrdenCompraCliente, null=True, blank=True, on_delete=models.SET_NULL)
+
+    # clean many-to-many to easily get only the list of products
+    productos = models.ManyToManyField(
+        Producto,
+        through='ProductoPedido',
+        related_name='pedidos'
+    )
+
+class ProductoPedido(models.Model):
+    pedido = models.ForeignKey(
+        Pedido,
+        on_delete=models.CASCADE,
+        related_name='items'      # ← THIS gives you pedido.items
+    )
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.IntegerField()
+    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2)
+
+
+# ============================================================
+#                     ESTADO PEDIDO (HISTORIAL)
+# ============================================================
+
+class EstadoPedido(models.Model):
+    nombre = models.CharField(max_length=100)
+    fecha_hora = models.DateTimeField()
+    observacion = models.TextField(blank=True, null=True)
+    asignado = models.CharField(max_length=100)
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='historial')
+
+
+# ============================================================
+#                    GUIA DE ENVIO (1 - N)
+# ============================================================
+
+class Transportadora(models.Model):
+    nombre = models.CharField(max_length=100)
+
+
+class GuiaEnvio(models.Model):
+    numero_guia = models.CharField(max_length=100)
+    direccion = models.CharField(max_length=255)
+    estado = models.CharField(max_length=100)
+    url = models.URLField()
+    transportadora = models.ForeignKey(Transportadora, on_delete=models.SET_NULL, null=True)
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='guias')
+
+
+# ============================================================
+#                     PAGO + MEDIO DE PAGO
+# ============================================================
+
+class MedioPago(models.Model):
+    nombre = models.CharField(max_length=100)
+    origen = models.CharField(max_length=100)
+
+
+class Pago(models.Model):
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='pagos')
+    medio_pago = models.ForeignKey(MedioPago, on_delete=models.SET_NULL, null=True)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    estado = models.CharField(max_length=100)
+    fecha_registro = models.DateTimeField()
+    fecha_confirmacion = models.DateTimeField(null=True, blank=True)
+
+
+# ============================================================
+#              UBICACIONES, BODEGAS, INVENTARIO
+# ============================================================
+
+class Ubicacion(models.Model):
+    codigo = models.CharField(max_length=50)
+    tipo = models.CharField(max_length=100)
+    capacidad_max = models.FloatField()
+    dimensiones = models.CharField(max_length=255)
+    estado = models.CharField(max_length=100)
+
+
+class Bodega(models.Model):
+    codigo = models.CharField(max_length=50)
+    nombre = models.CharField(max_length=100)
+    ciudad = models.CharField(max_length=100)
+    latitud = models.FloatField(null=True, blank=True)
+    longitud = models.FloatField(null=True, blank=True)
+    direccion = models.CharField(max_length=255)
+    capacidad = models.DecimalField(max_digits=10, decimal_places=2)
+    ubicacion = models.OneToOneField(Ubicacion, on_delete=models.SET_NULL, null=True, related_name='bodega')
+
+
+class Inventario(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True)
+    bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE, related_name='inventarios')
+    ubicacion = models.ForeignKey(Ubicacion, on_delete=models.SET_NULL, null=True)
+    cantidad_disponible = models.IntegerField()
+    cantidad_reservada = models.IntegerField()
+    ultima_actualizacion = models.DateTimeField()
+
+
+# ============================================================
+#                          EVIDENCIA
+# ============================================================
+
+class Evidencia(models.Model):
+    tipo = models.CharField(max_length=100)
+    url = models.URLField()
+    foto = models.ImageField(upload_to='evidencias/')
+    fecha_captura = models.DateTimeField()
+    observacion = models.TextField(blank=True, null=True)
+
+    capturado_por = models.CharField(max_length=100)
+    alistador = models.ForeignKey(Alistador, null=True, on_delete=models.SET_NULL)
+    empacador = models.ForeignKey(Empacador, null=True, on_delete=models.SET_NULL)
+    verificador = models.ForeignKey(Verificador, null=True, on_delete=models.SET_NULL)
+
+
+# ============================================================
+#                     TAREA LOGÍSTICA
+# ============================================================
 
 class TareaLogistica(models.Model):
     tipo = models.CharField(max_length=100)
     estado = models.CharField(max_length=100)
     prioridad = models.CharField(max_length=50)
     fecha_asignacion = models.DateTimeField()
-    fecha_fin = models.DateTimeField(blank=True, null=True)
-    pedidos = models.ForeignKey('Pedido', on_delete=models.SET_NULL, null=True)
-    alistadores = models.ForeignKey('Alistador', on_delete=models.SET_NULL, null=True, blank=True, related_name='tareas_alistador')
-    verificadores = models.ForeignKey('Verificador', on_delete=models.SET_NULL, null=True, blank=True, related_name='tareas_verificador')
-    empacadores = models.ForeignKey('Empacador', on_delete=models.SET_NULL, null=True, blank=True, related_name='tareas_empacador')
-    lider_logistica = models.ForeignKey('LiderLogistica', on_delete=models.SET_NULL, null=True, blank=True, related_name='tareas_lider')
-    administradores = models.ForeignKey('Administrador', on_delete=models.SET_NULL, null=True, blank=True, related_name='tareas_admin')
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+
+    pedido = models.ForeignKey(Pedido, null=True, on_delete=models.SET_NULL)
+    alistador = models.ForeignKey(Alistador, null=True, blank=True, on_delete=models.SET_NULL)
+    verificador = models.ForeignKey(Verificador, null=True, blank=True, on_delete=models.SET_NULL)
+    empacador = models.ForeignKey(Empacador, null=True, blank=True, on_delete=models.SET_NULL)
+    lider_logistica = models.ForeignKey(LiderLogistica, null=True, blank=True, on_delete=models.SET_NULL)
+    administrador = models.ForeignKey(Administrador, null=True, blank=True, on_delete=models.SET_NULL)
