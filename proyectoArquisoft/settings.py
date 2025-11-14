@@ -81,7 +81,9 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
+COGNITO_REGION = "us-east-1"
+COGNITO_USER_POOL_ID = "us-east-1_tPnCimwiB"
+COGNITO_APP_CLIENT_ID = "593e5kv7f4fm12vmpldkfbe85e"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
