@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+HASH_KEY= "3o!p@v3y1v+6$q8n=7b4m!d#r2&j^k0t%u)w@!h5rf1*s8z9a"
 
 # Application definition
 
