@@ -172,6 +172,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         function checkInventory(selectElement) {
             const productoId = selectElement.value;
@@ -218,7 +219,6 @@
             formData.append('direccion_id', document.getElementById('direccion').value);
             formData.append('precio_calculado', document.getElementById('precio').value);
             
-            // Recolectar productos
             const productos = [];
             document.querySelectorAll('.producto-row').forEach(row => {
                 const productoId = row.querySelector('.producto-select').value;
@@ -236,9 +236,6 @@
             try {
                 const response = await fetch('{% url "pedido_create" %}', {
                     method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                    },
                     body: formData
                 });
                 
@@ -261,9 +258,6 @@
             try {
                 const response = await fetch(`{% url "pedido_update" %}?id=${pedidoId}`, {
                     method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                    },
                     body: formData
                 });
                 
@@ -291,10 +285,7 @@
         function deletePedido(pedidoId) {
             if (confirm('¿Estás seguro de que deseas eliminar este pedido?')) {
                 fetch(`{% url "pedido_delete" %}?id=${pedidoId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                    }
+                    method: 'DELETE'
                 })
                 .then(response => {
                     if (response.ok) {
@@ -307,21 +298,7 @@
                 .catch(error => console.error('Error:', error));
             }
         }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
     </script>
+
 </body>
 </html>
