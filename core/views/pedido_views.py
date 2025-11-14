@@ -12,6 +12,21 @@ INVENTARIO_SERVICE_URL = settings.INVENTARIO_SERVICE_URL
 HASH_SECRET = settings.HASH_KEY
 
 @require_http_methods(["GET"])
+def check_inventory(request):
+    """Check if a product is available in inventory"""
+    producto_id = request.GET.get('producto_id')
+    try:
+        inventario = Inventario.objects.filter(producto_id=producto_id).first()
+        if inventario and inventario.cantidad_disponible > 0:
+            return JsonResponse({
+                'disponible': True,
+                'cantidad': inventario.cantidad_disponible
+            })
+        return JsonResponse({'disponible': False, 'cantidad': 0})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@require_http_methods(["GET"])
 def pedidos_view(request):
     """Display all pedidos"""
     pedidos = PedidoService.obtener_todos_pedidos()
