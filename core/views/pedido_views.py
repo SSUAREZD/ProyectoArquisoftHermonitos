@@ -1,177 +1,59 @@
-from django.shortcuts import render, get_object_or_404
+import json
+from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-import json
-import requests
-from core.services.pedido_service import PedidoService
-from core.services.checks_service import ChecksService
-from core.models import Cliente, Direccion, Producto, Inventario, ProductoPedido
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
-INVENTARIO_SERVICE_URL = settings.INVENTARIO_SERVICE_URL
-HASH_SECRET = settings.HASH_KEY
+from core.services.pedido_service import PedidoService
+from core.services.inventario_client import InventarioClient
+from core.models import Cliente, Direccion, Producto, ProductoPedido
 
-@require_http_methods(["GET"])
-def check_inventory(request):
-    """Check if a product is available in inventory"""
-    producto_id = request.GET.get('producto_id')
-    try:
-        inventario = Inventario.objects.filter(producto_id=producto_id).first()
-        if inventario and inventario.cantidad_disponible > 0:
-            return JsonResponse({
-                'disponible': True,
-                'cantidad': inventario.cantidad_disponible
-            })
-        return JsonResponse({'disponible': False, 'cantidad': 0})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
 
-@require_http_methods(["GET"])
-def pedidos_view(request):
-    """Display all pedidos"""
-    pedidos = PedidoService.obtener_todos_pedidos()
-    clientes = Cliente.objects.all()
-    direcciones = Direccion.objects.all()
-    productos = Producto.objects.all()
-
-    context = {
-        'pedidos': pedidos,
-        'clientes': clientes,
-        'direcciones': direcciones,
-        'productos': productos
-    }
-    return render(request, "pedido_template.html", context)
-
-def call_inventario_reservar(producto_id, cantidad, bodega_id=1):
-    """
-    Call manejador_inventarios to reserve product using HMAC integrity verification.
-    """
-    try:
-        # Payload canonical EXACTLY as server expects (alphabetical order)
-        payload = {
-            'bodega_id': str(bodega_id),
-            'cantidad': str(cantidad),
-            'producto_id': str(producto_id),
-        }
-
-        # DEBUG PRINTS
-        print("==== CLIENT DEBUG ====")
-        print("PAYLOAD:", payload)
-        hash_value = ChecksService.generar_hash_hmac(payload)
-        print("HASH GENERATED:", hash_value)
-        print("=======================")
-
-        # FormData sent to the inventory server
-        data = {
-            'bodega_id': payload['bodega_id'],
-            'cantidad': payload['cantidad'],
-            'producto_id': payload['producto_id'],
-            'hash': hash_value,
-        }
-
-        # CALL INVENTORY MANAGER
-        response = requests.post(
-            f"{INVENTARIO_SERVICE_URL}/api/inventarios/reservar-producto/",
-            data=data,
-            timeout=5
-        )
-
-        # Return OK response
-        if response.status_code == 200:
-            return response.json()
-
-        # Return detailed error message
-        return {
-            'success': False,
-            'error': f"Status {response.status_code}: {response.text}"
-        }
-
-    except requests.exceptions.RequestException as e:
-        return {
-            'success': False,
-            'error': f"Connection error to inventory manager: {str(e)}"
-        }
-
-    except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
-
+# pedidos_service/core/views/pedido_views.py
 @csrf_exempt
 @require_http_methods(["POST"])
 def pedido_create(request):
-    """Create pedido and reserve inventory on other server"""
     try:
         cliente_id = request.POST.get('cliente_id')
         direccion_id = request.POST.get('direccion_id')
         precio_calculado = request.POST.get('precio_calculado')
         productos_str = request.POST.get('productos', '[]')
         bodega_id = request.POST.get('bodega_id', 1)
-        
+
         productos = json.loads(productos_str)
-        
-        # Create pedido locally
-        pedido = PedidoService.crear_pedido(cliente_id, direccion_id, precio_calculado)
-        
-        # For each product, call inventory manager to reserve
+
+        # 1) Crear pedido base
+        pedido = PedidoService.crear_pedido(
+            cliente_id=cliente_id,
+            direccion_id=direccion_id,
+            precio_calculado=precio_calculado
+        )
+
+        # 2) Reservar inventario en microservicio de inventario
         for item in productos:
-            producto_id = item['producto_id']
-            cantidad = int(item['cantidad'])
-            
-            # CALL OTHER SERVER
-            reserve_result = call_inventario_reservar(producto_id, cantidad, bodega_id)
-            
-            if not reserve_result.get('success'):
-                # Rollback if reservation fails
+            producto_id = item["producto_id"]
+            cantidad = int(item["cantidad"])
+            precio_unitario = float(item.get("precio_unitario", 0))
+
+            reserva = InventarioClient.reservar_producto(
+                producto_id, cantidad, bodega_id
+            )
+
+            if not reserva.get("success", False):
                 pedido.delete()
                 return JsonResponse({
-                    'success': False,
-                    'error': f'Could not reserve product {producto_id}: {reserve_result.get("error")}'
+                    "success": False,
+                    "error": f"No se pudo reservar producto {producto_id}: {reserva.get('error')}"
                 }, status=400)
-            
-            # Add product to pedido
-            producto = Producto.objects.get(id=producto_id)
-            ProductoPedido.objects.create(
+
+            PedidoService.agregar_item(
                 pedido=pedido,
-                producto=producto,
+                producto_id=producto_id,
                 cantidad=cantidad,
-                precio_unitario=float(item.get('precio_unitario', 0)),
-                subtotal=cantidad * float(item.get('precio_unitario', 0))
+                precio_unitario=precio_unitario
             )
-        
-        return JsonResponse({'success': True, 'pedido_id': pedido.id})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
-@require_http_methods(["GET"])
-def pedido_detail(request):
-    """Get pedido details"""
-    pedido_id = request.GET.get('id')
-    try:
-        pedido = PedidoService.obtener_pedido(pedido_id)
-        return JsonResponse({'id': pedido.id, 'precio_calculado': str(pedido.precio_calculado)})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=404)
+        return JsonResponse({"success": True, "pedido_id": pedido.id})
 
-@require_http_methods(["POST"])
-def pedido_update(request):
-    """Update pedido"""
-    try:
-        pedido_id = request.GET.get('id')
-        precio_calculado = request.POST.get('precio_calculado')
-        pedido = PedidoService.actualizar_pedido(pedido_id, precio_calculado=precio_calculado)
-        return JsonResponse({'success': True, 'pedido_id': pedido.id})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
-@require_http_methods(["DELETE"])
-def pedido_delete(request):
-    """Delete pedido"""
-    try:
-        pedido_id = request.GET.get('id')
-        PedidoService.eliminar_pedido(pedido_id)
-        return JsonResponse({'success': True})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
