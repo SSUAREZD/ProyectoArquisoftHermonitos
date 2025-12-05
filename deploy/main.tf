@@ -125,6 +125,13 @@ resource "aws_security_group" "app_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # tighten later
   }
+  ingress {
+    description = "SSH (testing)"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # tighten later
+  }
 
   egress {
     from_port   = 0

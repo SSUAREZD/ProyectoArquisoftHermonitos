@@ -56,6 +56,7 @@ DATABASES = {
         "CONN_MAX_AGE": 60,
     }
 }
+STATIC_ROOT = "/opt/arquisoft/ProyectoArquisoftHermonitos/staticfiles"
 PYEOF
 
 # --- Wait for the creation of the database ---
@@ -352,7 +353,9 @@ WHERE NOT EXISTS (
 
 COMMIT;
 EOF
-# --- systemd service for Gunicorn on 0.0.0.0:8080 ---
+# =================================================================
+# ======================= GUNICORN SERVICE ========================
+# =================================================================
 cat >/etc/systemd/system/gunicorn.service <<'UNIT'
 [Unit]
 Description=Gunicorn Django service
@@ -363,11 +366,14 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/opt/arquisoft/ProyectoArquisoftHermonitos
 Environment="PATH=/opt/arquisoft/ProyectoArquisoftHermonitos/.venv/bin"
+
+# Bind to localhost ONLY (security)
 ExecStart=/opt/arquisoft/ProyectoArquisoftHermonitos/.venv/bin/gunicorn \
   --workers 2 \
   --timeout 120 \
-  --bind 0.0.0.0:8080 \
+  --bind 127.0.0.1:8080 \
   proyectoArquisoft.wsgi:application
+
 Restart=always
 RestartSec=5
 
@@ -375,6 +381,44 @@ RestartSec=5
 WantedBy=multi-user.target
 UNIT
 
+
+# =================================================================
+# ======================= NGINX CONFIG ============================
+# =================================================================
+
+# Remove default nginx page
+rm -f /etc/nginx/sites-enabled/default || true
+
+# Reverse proxy for Django
+cat > /etc/nginx/sites-available/django <<'NGINXCONF'
+server {
+    listen 80;
+    server_name _;
+
+    client_max_body_size 50M;
+
+    # Proxy to Gunicorn
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Static file hosting
+    location /static/ {
+        alias /opt/arquisoft/ProyectoArquisoftHermonitos/staticfiles/;
+    }
+}
+NGINXCONF
+
+ln -sf /etc/nginx/sites-available/django /etc/nginx/sites-enabled/django
+
+# --- Restart everything ---
 systemctl daemon-reload
 systemctl enable gunicorn
-systemctl start gunicorn
+systemctl restart gunicorn
+
+systemctl enable nginx
+systemctl restart nginx
