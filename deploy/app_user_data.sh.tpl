@@ -383,28 +383,41 @@ UNIT
 
 
 # =================================================================
-# ======================= NGINX CONFIG ============================
+# ======================= NGINX BASE CONFIG =======================
 # =================================================================
 
-# Remove default nginx page
+# Overwrite nginx.conf with proper layout
+cat > /etc/nginx/nginx.conf <<'NGINXMAIN'
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    # ===== Global Rate Limit Zone =====
+    # Allow 10 requests per second per IP
+    limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+
+    include /etc/nginx/sites-enabled/*;
+}
+NGINXMAIN
+
+# Remove default nginx site if exists
+rm -f /etc/nginx/sites-enabled/default || true
+
+# Server config with rate limiting & Django proxy
 cat > /etc/nginx/sites-available/django <<'NGINXCONF'
-
-# ===== Global Rate Limiting Rules =====
-# Zone name: api_limit
-# Memory: 10MB (stores tokens per IP)
-# Rate: 10 requests per second
-limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
-
 server {
     listen 80;
     server_name _;
 
     client_max_body_size 50M;
 
-    # Apply rate limiting to ALL routes
-    # burst=20 -> allows short spikes
-    # nodelay -> don't artificially delay requests, fail fast
     location / {
+        # allow small burst of up to 20 requests
         limit_req zone=api_limit burst=20 nodelay;
 
         proxy_pass http://127.0.0.1:8080;
@@ -414,13 +427,13 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
-    # Static file hosting (not rate-limited)
     location /static/ {
         alias /opt/arquisoft/ProyectoArquisoftHermonitos/staticfiles/;
     }
 }
 NGINXCONF
 
+# Enable server block
 ln -sf /etc/nginx/sites-available/django /etc/nginx/sites-enabled/django
 
 # --- Restart everything ---
