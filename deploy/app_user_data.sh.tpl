@@ -82,7 +82,371 @@ python3 manage.py migrate --noinput || (sleep 5 && python3 manage.py migrate --n
 
 # ---  population ---   (si tus modelos cambiaron mucho entre ramas, revisa esto luego)
 psql "postgresql://${db_user}:${db_password}@${db_host}:${db_port}/${db_name}" -v ON_ERROR_STOP=1 <<'EOF' || true
--- ... (tu SQL de población tal cual lo tenías) ...
+BEGIN;
+
+-- ===============================================
+-- 1. Ubicación
+-- ===============================================
+INSERT INTO core_ubicacion (codigo, tipo, capacidad_max, dimensiones, estado)
+SELECT 'UB-01', 'Estanteria', 200.0, '2mx1mx1m', 'Disponible'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_ubicacion WHERE codigo = 'UB-01'
+);
+
+-- ===============================================
+-- 2. Bodega
+-- ===============================================
+INSERT INTO core_bodega (codigo, nombre, ciudad, latitud, longitud, direccion, capacidad, ubicacion_id)
+SELECT 
+  'BOD-001', 
+  'Bodega Central', 
+  'Bogotá', 
+  4.664, 
+  -74.060, 
+  'Cra 7 # 72-41', 
+  1000.00,
+  (SELECT id FROM core_ubicacion WHERE codigo = 'UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_bodega WHERE codigo = 'BOD-001'
+);
+
+-- ===============================================
+-- 3. Productos
+-- ===============================================
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7701234567890', 'Electronico', 1.5, 0.002, 'PRD-001'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-001');
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7700987654321', 'Juguete', 0.3, 0.0005, 'PRD-002'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-002');
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7705001000001', 'Bebida', 1.5, 0.0015, 'PRD-003'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-003');
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7702002000002', 'Alimento', 5.0, 0.0045, 'PRD-004'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-004');
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7709003000003', 'Herramienta', 1.8, 0.0032, 'PRD-005'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-005');
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7708004000004', 'Electrónico', 1.6, 0.0041, 'PRD-006'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-006');
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7703005000005', 'Ferretería', 0.4, 0.0006, 'PRD-007'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-007');
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7704006000006', 'Higiene', 1.1, 0.0021, 'PRD-008'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-008');
+
+INSERT INTO core_producto (codigo_barras, tipo, peso, volumen, codigo)
+SELECT '7707007000007', 'Automotriz', 1.0, 0.0012, 'PRD-009'
+WHERE NOT EXISTS (SELECT 1 FROM core_producto WHERE codigo = 'PRD-009');
+
+-- ===============================================
+-- 4. Inventario PRD-001 → PRD-009
+-- ===============================================
+
+-- PRD-001
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  50, 5, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-001'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-001')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- PRD-002
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  150, 10, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-002'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-002')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- PRD-003
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  120, 10, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-003'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-003')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- PRD-004
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  60, 5, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-004'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-004')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- PRD-005
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  18, 2, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-005'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-005')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- PRD-006
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  25, 1, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-006'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-006')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- PRD-007
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  200, 15, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-007'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-007')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- PRD-008
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  90, 5, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-008'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-008')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- PRD-009
+INSERT INTO core_inventario (
+  cantidad_disponible, cantidad_reservada, ultima_actualizacion,
+  producto_id, bodega_id, ubicacion_id
+)
+SELECT 
+  40, 3, NOW(),
+  (SELECT id FROM core_producto WHERE codigo='PRD-009'),
+  (SELECT id FROM core_bodega WHERE codigo='BOD-001'),
+  (SELECT id FROM core_ubicacion WHERE codigo='UB-01')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_inventario 
+  WHERE producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-009')
+    AND bodega_id   = (SELECT id FROM core_bodega WHERE codigo='BOD-001')
+);
+
+-- ============================================================
+-- 5. CLIENTE + DIRECCIÓN + CONDICIÓN DE PAGO + CRÉDITO
+-- ============================================================
+
+-- Dirección principal del cliente
+INSERT INTO core_direccion (tipo, calle, ciudad, dpto, pais, referencias, contacto_nombre, tel)
+SELECT 
+  'Residencial',
+  'Calle 123 #45-67',
+  'Bogotá',
+  'Cundinamarca',
+  'Colombia',
+  'Frente al parque principal',
+  'Juan Pérez',
+  '3001234567'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_direccion WHERE calle='Calle 123 #45-67' AND ciudad='Bogotá'
+);
+
+-- Cliente
+INSERT INTO core_cliente (nombre, info_pago)
+SELECT 'Juan Pérez', 'Crédito empresarial'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_cliente WHERE nombre='Juan Pérez'
+);
+
+-- Condición de pago
+INSERT INTO core_condicionpago (nombre, info_pago)
+SELECT 'Pago a 30 días', 'Crédito a 30 días para empresa'
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_condicionpago WHERE nombre='Pago a 30 días'
+);
+
+-- Orden de compra
+INSERT INTO core_ordencompracliente (cliente_id, condicion_pago_id)
+SELECT 
+  (SELECT id FROM core_cliente WHERE nombre='Juan Pérez'),
+  (SELECT id FROM core_condicionpago WHERE nombre='Pago a 30 días')
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_ordencompracliente
+  WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+);
+
+-- Crédito del cliente
+INSERT INTO core_creditocliente (cliente_id, cupo_asignado, cupo_disponible, dias_plazo)
+SELECT 
+  (SELECT id FROM core_cliente WHERE nombre='Juan Pérez'),
+  5000000,   -- COP 5 millones
+  5000000,
+  30
+WHERE NOT EXISTS (
+  SELECT 1 FROM core_creditocliente WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+);
+
+-- ============================================================
+-- 6. PEDIDO DEMO + ITEMS + ESTADO
+-- ============================================================
+
+-- Pedido demo para Juan Pérez
+INSERT INTO core_pedido (
+  precio_calculado,
+  cliente_id,
+  direccion_id,
+  condicion_pago_id,
+  orden_compra_id
+)
+SELECT
+  100000,  -- precio total del pedido
+  (SELECT id FROM core_cliente WHERE nombre = 'Juan Pérez'),
+  (SELECT id FROM core_direccion WHERE calle='Calle 123 #45-67' AND ciudad='Bogotá'),
+  (SELECT id FROM core_condicionpago WHERE nombre='Pago a 30 días'),
+  (SELECT id FROM core_ordencompracliente
+     WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+     LIMIT 1)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM core_pedido
+  WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+    AND precio_calculado = 100000
+);
+
+
+-- Item del pedido demo: PRD-001, 2 unidades x 50.000
+INSERT INTO core_productopedido (
+  pedido_id,
+  producto_id,
+  cantidad,
+  precio_unitario,
+  subtotal
+)
+SELECT
+  -- tomamos el pedido demo que acabamos de crear
+  (SELECT id
+   FROM core_pedido
+   WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+     AND precio_calculado = 100000
+   ORDER BY id ASC
+   LIMIT 1),
+  (SELECT id FROM core_producto WHERE codigo='PRD-001'),
+  2,        -- cantidad
+  50000,    -- precio_unitario
+  100000    -- subtotal = 2 * 50000
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM core_productopedido
+  WHERE pedido_id = (
+      SELECT id
+      FROM core_pedido
+      WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+        AND precio_calculado = 100000
+      ORDER BY id ASC
+      LIMIT 1
+  )
+    AND producto_id = (SELECT id FROM core_producto WHERE codigo='PRD-001')
+);
+
+
+-- Estado del pedido demo
+INSERT INTO core_estadopedido (
+  nombre,
+  fecha_hora,
+  observacion,
+  asignado,
+  pedido_id
+)
+SELECT
+  'Creado',
+  NOW(),
+  'Pedido demo inicial para pruebas',
+  'sistema',
+  (SELECT id
+   FROM core_pedido
+   WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+     AND precio_calculado = 100000
+   ORDER BY id ASC
+   LIMIT 1)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM core_estadopedido
+  WHERE pedido_id = (
+      SELECT id
+      FROM core_pedido
+      WHERE cliente_id = (SELECT id FROM core_cliente WHERE nombre='Juan Pérez')
+        AND precio_calculado = 100000
+      ORDER BY id ASC
+      LIMIT 1
+  )
+    AND nombre = 'Creado'
+);
+COMMIT;
 EOF
 
 # =================================================================
