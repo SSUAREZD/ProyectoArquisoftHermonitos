@@ -387,18 +387,26 @@ UNIT
 # =================================================================
 
 # Remove default nginx page
-rm -f /etc/nginx/sites-enabled/default || true
-
-# Reverse proxy for Django
 cat > /etc/nginx/sites-available/django <<'NGINXCONF'
+
+# ===== Global Rate Limiting Rules =====
+# Zone name: api_limit
+# Memory: 10MB (stores tokens per IP)
+# Rate: 10 requests per second
+limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+
 server {
     listen 80;
     server_name _;
 
     client_max_body_size 50M;
 
-    # Proxy to Gunicorn
+    # Apply rate limiting to ALL routes
+    # burst=20 -> allows short spikes
+    # nodelay -> don't artificially delay requests, fail fast
     location / {
+        limit_req zone=api_limit burst=20 nodelay;
+
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -406,7 +414,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
-    # Static file hosting
+    # Static file hosting (not rate-limited)
     location /static/ {
         alias /opt/arquisoft/ProyectoArquisoftHermonitos/staticfiles/;
     }
