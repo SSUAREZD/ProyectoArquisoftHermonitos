@@ -41,7 +41,7 @@ class InventarioClient:
             }
 
             resp = requests.post(
-                f"{INVENTARIO_SERVICE_URL}/api/inventarios/reservar-producto/",
+                f"{INVENTARIO_SERVICE_URL}/api/inventarios/reservar/",
                 data=data,
                 timeout=0.5,
             )
