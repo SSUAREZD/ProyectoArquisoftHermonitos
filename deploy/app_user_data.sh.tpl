@@ -4,7 +4,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 # --- Basic packages ---
 apt-get update
-apt-get install -y python3 python3-venv python3-pip git build-essential libpq-dev postgresql-client
+apt-get install -y python3 python3-venv python3-pip git build-essential libpq-dev postgresql-client nginx
 
 APP_HOME=/opt/arquisoft
 mkdir -p "$APP_HOME"
